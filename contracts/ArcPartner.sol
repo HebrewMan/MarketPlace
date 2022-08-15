@@ -22,13 +22,14 @@ contract ArcPartner {
      * @param account_ address
      */
     function transferPartner(address account_) public onlyPartner {
-        _partner = account_;
+        _setPartner(account_);
     }
 
     /**
      * @dev Set partner
      */
     function _setPartner(address partner_) internal {
+        require(partner_ != address(0), "ARC:ADDR0");
         _partner = partner_;
     }
 }

@@ -24,8 +24,9 @@ interface IAirdrop {
     function openActivity(uint256 id) external;
     function closeActivity(uint256 id) external;
 
-    event AddActivity(uint id);
-    event AddUserRewards(uint256 id, address user, uint256 amounts);
-    event RemoveUserRewards(uint256 id, address user, uint256 amounts);
-    event SetStatus(uint256 id, bool status);
+    event AddActivity(uint256 indexed id);
+    event AddUserRewards(uint256 indexed id, address indexed user, uint256 amounts);
+    event RemoveUserRewards(uint256 indexed id, address indexed user, uint256 amounts);
+    event WithdrawRemain(uint256 indexed id, address indexed target, uint256 remain);
+    event SetStatus(uint256 indexed id, bool status);
 }
