@@ -15,7 +15,7 @@ interface IAirdrop {
         uint256 amounts;
     }
 
-    function addActivity(address target) external returns (uint256);
+    function addActivity(address asset) external returns (uint256);
     function addUserRewards(uint256 id, address user, uint256 targetId, uint256 amounts) external;
     function addUsersRewards(address[] memory users, uint256[] memory targetIds, uint256[] memory amounts) external;
     function removeUserRewards(uint256 id, address user, uint256 amounts) external;
