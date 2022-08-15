@@ -19,11 +19,8 @@ contract TokenAirdropTemplate is IAirdrop, ArcGuarder, ArcPartner, ArcInit {
     // activityId => ( userAddress => Reward )
     mapping(uint256 => mapping(address => Reward)) public rewards;
 
+    // index of activity
     uint256 private _index;
-        address target;
-        uint256 totalAmounts;
-        uint256 totalUsers;
-        bool status;
 
     /**
      * @dev Initialize
