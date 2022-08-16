@@ -8,7 +8,7 @@ contract ArcGuarder {
      * @dev Governance's contract address
      */
     //address _governance;
-    address _governance = address(0x31355B90197d9b92Cf2B38E171E49d54E7643fbE);
+    address _governance = address(0x182Bf190C46D0095aE0567E57156AdB05d182474);
 
     /**
      * @dev State of pause
