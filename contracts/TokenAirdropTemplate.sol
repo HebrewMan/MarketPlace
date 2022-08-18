@@ -29,6 +29,8 @@ contract TokenAirdropTemplate is
     // index of activity
     uint256 private _index;
 
+    uint256 private unlocked = 1;
+
     /**
      * @dev Modifier to allow actions only when the activity is not destroy
      */
@@ -37,6 +39,13 @@ contract TokenAirdropTemplate is
             require(!activities[id].isDestroy, "ARC:DESTROYED");
         }
         _;
+    }
+
+    modifier lock() {
+        require(unlocked == 1, "ARC:LOCKED");
+        unlocked = 0;
+        _;
+        unlocked = 1;
     }
 
     /**
@@ -56,9 +65,9 @@ contract TokenAirdropTemplate is
         address user,
         uint256 targetId,
         uint256 amount
-    ) public override onlyPartner {
+    ) public override lock onlyPartner {
         _addUserRewards(id, asset, user, targetId, amount);
-        TransferHelper.safeTransferFrom(asset, msg.sender, address, amount);
+        TransferHelper.safeTransferFrom(asset, msg.sender, address(this), amount);
     }
 
     /**
@@ -70,7 +79,7 @@ contract TokenAirdropTemplate is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public override onlyPartner {
+    ) public override lock onlyPartner {
         require(
             users.length > 0 &&
                 targetIds.length == users.length &&
@@ -88,7 +97,7 @@ contract TokenAirdropTemplate is
         TransferHelper.safeTransferFrom(
             asset,
             msg.sender,
-            address,
+            address(this),
             _totalAmount
         );
     }
@@ -105,7 +114,7 @@ contract TokenAirdropTemplate is
         address user,
         uint256 targetId,
         uint256 amount
-    ) public override onlyPartner {
+    ) public override lock onlyPartner {
         uint256 refundAmount = _removeUserRewards(id, user, targetId, amount);
 
         if (refundAmount > 0) {
@@ -125,7 +134,7 @@ contract TokenAirdropTemplate is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public override onlyPartner {
+    ) public override lock onlyPartner {
         require(
             users.length > 0 &&
                 targetIds.length == users.length &&
@@ -164,6 +173,7 @@ contract TokenAirdropTemplate is
         public
         override
         onlyPartner
+        lock
         whenNotPaused
         noDestroy(id)
     {
@@ -193,6 +203,7 @@ contract TokenAirdropTemplate is
     function withdrawRewards(uint256 id, uint256 targetId)
         public
         override
+        lock
         whenNotPaused
     {
         require(id > 0 && id <= _index, "ARC:ERRID");
