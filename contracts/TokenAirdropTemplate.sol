@@ -65,8 +65,8 @@ contract TokenAirdropTemplate is
         address user,
         uint256 targetId,
         uint256 amount
-    ) public override lock onlyPartner {
-        _addUserRewards(id, asset, user, targetId, amount);
+    ) public override lock onlyPartner returns (uint256 index) {
+        index = _addUserRewards(id, asset, user, targetId, amount);
         TransferHelper.safeTransferFrom(asset, msg.sender, address(this), amount);
     }
 
@@ -79,7 +79,7 @@ contract TokenAirdropTemplate is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public override lock onlyPartner {
+    ) public override lock onlyPartner returns (uint256 index) {
         require(
             users.length > 0 &&
                 targetIds.length == users.length &&
@@ -89,7 +89,7 @@ contract TokenAirdropTemplate is
 
         uint256 _totalAmount;
         for (uint256 i = 0; i < users.length; i++) {
-            _addUserRewards(id, asset, users[i], targetIds[i], amounts[i]);
+            index = _addUserRewards(id, asset, users[i], targetIds[i], amounts[i]);
 
             _totalAmount = _totalAmount + amounts[i];
         }
@@ -252,7 +252,7 @@ contract TokenAirdropTemplate is
         address user,
         uint256 targetId,
         uint256 amount
-    ) private whenNotPaused noDestroy(id) {
+    ) private whenNotPaused noDestroy(id) returns (uint256) {
         require(
             user != address(0) && amount > 0 && asset != address(0),
             "ARC:ERR_PARAMS"
@@ -270,6 +270,8 @@ contract TokenAirdropTemplate is
             activities[_index] = Activity(asset, 0, 0, false, false);
 
             emit AddActivity(_index, asset);
+
+            id = _index;
         }
 
         Activity storage _activity = activities[id];
@@ -280,6 +282,8 @@ contract TokenAirdropTemplate is
         _activity.totalAmounts = _activity.totalAmounts + amount;
 
         emit AddUserRewards(id, user, amount);
+
+        return id;
     }
 
     /**

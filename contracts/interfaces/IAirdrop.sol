@@ -11,8 +11,8 @@ interface IAirdrop {
         bool isDestroy;
     }
 
-    function addUserRewards(uint256 id, address asset, address user, uint256 targetId, uint256 amount) external;
-    function addUsersRewards(uint256 id, address asset, address[] memory users, uint256[] memory targetIds, uint256[] memory amounts) external;
+    function addUserRewards(uint256 id, address asset, address user, uint256 targetId, uint256 amount) external returns (uint256 index);
+    function addUsersRewards(uint256 id, address asset, address[] memory users, uint256[] memory targetIds, uint256[] memory amounts) external returns (uint256 index);
     function removeUserRewards(uint256 id, address user, uint256 targetId, uint256 amount) external;
     function removeUsersRewards(uint256 id, address[] memory users, uint256[] memory targetIds, uint256[] memory amounts) external;
     function destroyActivity(uint256 id) external;
