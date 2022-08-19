@@ -5,5 +5,5 @@ interface IAirdropFactory {
 
     function createAirdropContract() external returns (address);
 
-    event CreateAirdropContract(address contractAddress);
+    event CreateAirdropContract(address indexed contractAddress);
 }
