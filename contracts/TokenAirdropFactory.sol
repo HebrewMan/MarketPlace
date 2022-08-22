@@ -11,7 +11,6 @@ contract TokenAirdropFactory is IAirdropFactory, ArcGuarder {
 
     function createAirdropContract()
         public
-        override
         whenNotPaused
         returns (address)
     {

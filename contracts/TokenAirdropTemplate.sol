@@ -29,7 +29,14 @@ contract TokenAirdropTemplate is
     // index of activity
     uint256 private _index;
 
-    uint256 private unlocked = 1;
+    /**
+     * @dev Modifier to allow actions only when the activity is not paused
+     */
+    modifier noPaused(uint256 id) {
+        require(id > 0, "ARC:ERRID");
+        require(activities[id].status, "ARC:ACTIV_PAUSED");
+        _;
+    }
 
     /**
      * @dev Modifier to allow actions only when the activity is not destroy
@@ -41,11 +48,11 @@ contract TokenAirdropTemplate is
         _;
     }
 
-    modifier lock() {
-        require(unlocked == 1, "ARC:LOCKED");
-        unlocked = 0;
+    modifier lock(uint256 id) {
+        require(activities[id].unlocked, "ARC:LOCKED");
+        activities[id].unlocked = false;
         _;
-        unlocked = 1;
+        activities[id].unlocked = true;
     }
 
     /**
@@ -65,7 +72,7 @@ contract TokenAirdropTemplate is
         address user,
         uint256 targetId,
         uint256 amount
-    ) public override lock onlyPartner returns (uint256 index) {
+    ) public lock(id) onlyPartner returns (uint256 index) {
         index = _addUserRewards(id, asset, user, targetId, amount);
         TransferHelper.safeTransferFrom(asset, msg.sender, address(this), amount);
     }
@@ -79,7 +86,7 @@ contract TokenAirdropTemplate is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public override lock onlyPartner returns (uint256 index) {
+    ) public lock(id) onlyPartner returns (uint256 index) {
         require(
             users.length > 0 &&
                 targetIds.length == users.length &&
@@ -114,7 +121,7 @@ contract TokenAirdropTemplate is
         address user,
         uint256 targetId,
         uint256 amount
-    ) public override lock onlyPartner {
+    ) public lock(id) onlyPartner {
         uint256 refundAmount = _removeUserRewards(id, user, targetId, amount);
 
         if (refundAmount > 0) {
@@ -134,7 +141,7 @@ contract TokenAirdropTemplate is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public override lock onlyPartner {
+    ) public lock(id) onlyPartner {
         require(
             users.length > 0 &&
                 targetIds.length == users.length &&
@@ -171,16 +178,14 @@ contract TokenAirdropTemplate is
      */
     function destroyActivity(uint256 id)
         public
-        override
         onlyPartner
-        lock
+        lock(id)
         whenNotPaused
         noDestroy(id)
     {
         require(id > 0 && id <= _index, "ARC:ERRID");
 
-        // stop activity
-        activities[id].status = false;
+        activities[id].status = false; // stop activity
         activities[id].isDestroy = true;
 
         address _target = activities[id].target;
@@ -202,8 +207,8 @@ contract TokenAirdropTemplate is
      */
     function withdrawRewards(uint256 id, uint256 targetId)
         public
-        override
-        lock
+        lock(id)
+        noPaused(id)
         whenNotPaused
     {
         require(id > 0 && id <= _index, "ARC:ERRID");
@@ -223,14 +228,14 @@ contract TokenAirdropTemplate is
         emit WithdrawRewards(id, msg.sender, targetId, _reward);
     }
 
-    function openActivity(uint256 id) public override onlyPartner noDestroy(id) {
+    function openActivity(uint256 id) public onlyPartner noDestroy(id) {
         require(id > 0 && id <= _index, "ARC:ERRID");
         activities[id].status = true;
 
         emit SetStatus(id, true);
     }
 
-    function closeActivity(uint256 id) public override onlyPartner noDestroy(id) {
+    function closeActivity(uint256 id) public onlyPartner lock(id) noDestroy(id) {
         require(id > 0 && id <= _index, "ARC:ERRID");
         activities[id].status = false;
 
@@ -267,7 +272,7 @@ contract TokenAirdropTemplate is
         } else {
             // if it is no activitiy, then create it.
             _index = _index + 1;
-            activities[_index] = Activity(asset, 0, 0, false, false);
+            activities[_index] = Activity(asset, 0, 0, false, false, true);
 
             emit AddActivity(_index, asset);
 
