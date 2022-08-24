@@ -49,10 +49,14 @@ contract TokenAirdropTemplate is
     }
 
     modifier lock(uint256 id) {
-        require(activities[id].unlocked, "ARC:LOCKED");
-        activities[id].unlocked = false;
-        _;
-        activities[id].unlocked = true;
+        if (id > 0) {
+            require(activities[id].unlocked, "ARC:LOCKED");
+            activities[id].unlocked = false;
+            _;
+            activities[id].unlocked = true;
+        } else {
+            _;
+        }
     }
 
     /**
