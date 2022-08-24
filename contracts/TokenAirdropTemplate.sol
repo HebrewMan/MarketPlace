@@ -263,7 +263,7 @@ contract TokenAirdropTemplate is
         uint256 amount
     ) private whenNotPaused noDestroy(id) returns (uint256) {
         require(
-            user != address(0) && amount > 0 && asset != address(0),
+            user != address(0) && amount > 0,
             "ARC:ERR_PARAMS"
         );
         require(
