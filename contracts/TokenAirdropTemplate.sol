@@ -84,6 +84,8 @@ contract TokenAirdropTemplate is
 
         TransferHelper.safeTransferFrom(asset, msg.sender, address(this), amount);
 
+        emit AddUserRewards(_id, user, amount);
+
         return _id;
     }
 
