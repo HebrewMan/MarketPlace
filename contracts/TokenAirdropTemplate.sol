@@ -74,13 +74,12 @@ contract TokenAirdropTemplate is
         uint256 targetId,
         uint256 amount
     ) public lock(id) onlyPartner returns (uint256) {
-        uint _id = id;
 
-        _addUserRewards(id,asset);
+        uint _id = _addUserRewards(id,asset);
 
-        activities[id].totalAmounts += amount;
+        activities[_id].totalAmounts += amount;
 
-        rewards[id][user][targetId] += amount;
+        rewards[_id][user][targetId] += amount;
 
         TransferHelper.safeTransferFrom(asset, msg.sender, address(this), amount);
 
