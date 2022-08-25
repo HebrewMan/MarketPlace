@@ -103,9 +103,12 @@ contract TokenAirdropTemplate is
         );
 
         uint _id = _addUserRewards(id,asset);
+        uint transferTotalAmount;
 
         for (uint i = 0; i < users.length; i++) {
             require(amounts[i] > 0,"ARC: Amounts[i] must be greater than 0 ");
+
+            transferTotalAmount += amounts[i];
 
             activities[_id].totalAmounts += amounts[i];
             rewards[_id][users[i]][targetIds[i]] += amounts[i];
@@ -117,7 +120,7 @@ contract TokenAirdropTemplate is
             asset,
             msg.sender,
             address(this),
-            activities[_id].totalAmounts 
+            transferTotalAmount
         );
 
         return _id;
