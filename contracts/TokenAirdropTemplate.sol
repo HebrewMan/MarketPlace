@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-
 import "./libraries/transferHelper.sol";
-import  "./interfaces/IBEP20.sol";
-import  "./interfaces/IAirdrop.sol";
+import "./interfaces/IBEP20.sol";
+import "./interfaces/IAirdrop.sol";
 import "./ArcPartner.sol";
 import "./ArcTokenGuarder.sol";
 import "./ArcInit.sol";
@@ -74,14 +72,18 @@ contract TokenAirdropTemplate is
         uint256 targetId,
         uint256 amount
     ) public lock(id) onlyPartner returns (uint256) {
-
-        uint _id = _addUserRewards(id,asset);
+        uint256 _id = _addUserRewards(id, asset);
 
         activities[_id].totalAmounts += amount;
 
         rewards[_id][user][targetId] += amount;
 
-        TransferHelper.safeTransferFrom(asset, msg.sender, address(this), amount);
+        TransferHelper.safeTransferFrom(
+            asset,
+            msg.sender,
+            address(this),
+            amount
+        );
 
         emit AddUserRewards(_id, user, amount);
 
@@ -98,14 +100,17 @@ contract TokenAirdropTemplate is
         uint256[] memory targetIds,
         uint256[] memory amounts
     ) public lock(id) onlyPartner returns (uint256) {
-        require(users.length > 0 && targetIds.length == users.length && amounts.length == users.length,
+        require(
+            users.length > 0 &&
+                targetIds.length == users.length &&
+                amounts.length == users.length,
             "ARC:Array length is error"
         );
 
-        uint _id = _addUserRewards(id,asset);
+        uint256 _id = _addUserRewards(id, asset);
 
-        for (uint i = 0; i < users.length; i++) {
-            require(amounts[i] > 0,"ARC: Amounts[i] must be greater than 0 ");
+        for (uint256 i = 0; i < users.length; i++) {
+            require(amounts[i] > 0, "ARC: Amounts[i] must be greater than 0 ");
 
             activities[_id].totalAmounts += amounts[i];
             rewards[_id][users[i]][targetIds[i]] += amounts[i];
@@ -117,7 +122,7 @@ contract TokenAirdropTemplate is
             asset,
             msg.sender,
             address(this),
-            activities[_id].totalAmounts 
+            activities[_id].totalAmounts
         );
 
         return _id;
@@ -156,7 +161,10 @@ contract TokenAirdropTemplate is
         uint256[] memory targetIds,
         uint256[] memory amounts
     ) public lock(id) onlyPartner {
-        require(users.length > 0 && targetIds.length == users.length && amounts.length == users.length,
+        require(
+            users.length > 0 &&
+                targetIds.length == users.length &&
+                amounts.length == users.length,
             "ARC:ERR_PARAMS"
         );
 
@@ -200,12 +208,16 @@ contract TokenAirdropTemplate is
         activities[id].isDestroy = true;
 
         address _target = activities[id].target;
-        uint256 remain = activities[id].totalAmounts - activities[id].totalRewardeds;
+        uint256 remain = activities[id].totalAmounts -
+            activities[id].totalRewardeds;
 
         if (remain > 0) {
-            require(remain <= IBEP20(_target).balanceOf(address(this)), "ARC:OUT_OF_BALANCE");
+            require(
+                remain <= IBEP20(_target).balanceOf(address(this)),
+                "ARC:OUT_OF_BALANCE"
+            );
 
-             TransferHelper.safeTransfer(_target, msg.sender, remain);
+            TransferHelper.safeTransfer(_target, msg.sender, remain);
         }
 
         emit DestroyActivity(id, remain);
@@ -246,7 +258,12 @@ contract TokenAirdropTemplate is
         emit SetStatus(id, true);
     }
 
-    function closeActivity(uint256 id) public onlyPartner lock(id) noDestroy(id) {
+    function closeActivity(uint256 id)
+        public
+        onlyPartner
+        lock(id)
+        noDestroy(id)
+    {
         require(id > 0 && id <= currentId, "ARC:ERRID");
         activities[id].status = false;
 
@@ -258,24 +275,27 @@ contract TokenAirdropTemplate is
      * @param id activity Id. it should be 0 when it is first created
      * @param asset target token address
      */
+    function _addUserRewards(uint256 id, address asset)
+        private
+        whenNotPaused
+        noDestroy(id)
+        returns (uint256)
+    {
+        require(asset != address(0), "ARC:Asset Must not be address(0)");
 
-    function _addUserRewards(
-        uint256 id,
-        address asset
-    ) private whenNotPaused noDestroy(id) returns(uint){
-        require(asset != address(0),"ARC:Asset Must not be address(0)");
-
-        if(id>0){
-            require(activities[id].target == asset, "ARC: Asset address is error");
+        if (id > 0) {
+            require(
+                activities[id].target == asset,
+                "ARC: Asset address is error"
+            );
             return id;
-        }else{
+        } else {
             currentId += 1;
             activities[currentId].target = asset;
             activities[currentId].unlocked = true;
             emit AddActivity(currentId, asset);
             return currentId;
         }
-
     }
 
     /**
