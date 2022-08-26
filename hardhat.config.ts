@@ -1,30 +1,50 @@
 import { HardhatUserConfig } from "hardhat/config";
+import { config as dotenvConfig } from "dotenv";
 import "hardhat-abi-exporter";
 import "@nomicfoundation/hardhat-toolbox";
+import { resolve } from "path";
+
+const dotenvConfigPath: string = process.env.DOTENV_CONFIG_PATH || "./.env";
+dotenvConfig({ path: resolve(__dirname, dotenvConfigPath) });
 
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.9",
+  solidity: {
+    compilers: [
+      {
+          version: "0.8.14"
+      },
+        {
+            version: "0.8.9"
+        },
+    ],
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
   networks: {
     mainnet: {
-      url:'https://bsc-dataseed.binance.org/',
+      url:process.env.BSC_MAINNET_URL,
       chainId: 56,
-      accounts:['3dc56a87216e81830a8b5193fdabcf9b85f48ddaa266a041d97573e872ba8923'],
+      accounts:[process.env.PRIVATE_KEY || ''],
     },
     bsctest: { 
-      url:'https://data-seed-prebsc-1.arcdex.io:8575/',
+      url:process.env.BSC_TESTNET_ARC_URL,
       chainId: 97,
-      accounts:['3dc56a87216e81830a8b5193fdabcf9b85f48ddaa266a041d97573e872ba8923'],
+      accounts:[process.env.PRIVATE_KEY || ''],
     },
     kovan: {
-      url: 'https://kovan.infura.io/v3/d8fdd5c450944e2e8a5bdf0f1ae7440e',
+      url: process.env.KOVAN_URL,
       chainId: 42,
-      accounts:['3dc56a87216e81830a8b5193fdabcf9b85f48ddaa266a041d97573e872ba8923'],
+      accounts:[process.env.PRIVATE_KEY || ''],
     },
     
   },
   etherscan: {
-    apiKey: 'ABC123ABC123ABC123ABC123ABC123ABC1',
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
 };
 

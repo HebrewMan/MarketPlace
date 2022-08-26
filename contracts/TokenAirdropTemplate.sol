@@ -14,14 +14,15 @@ contract TokenAirdropTemplate is
     ArcPartner,
     ArcInit
 {
-    // activity => Activity
+    // activityId => Activity data
     mapping(uint256 => Activity) public activities;
 
     // activityId => ( userAddress => ( targetId => reward ) )
     mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
         public rewards;
 
-    // index of activity
+    // index of activity 
+    // The activity that creates the activity is to be used
     uint256 public currentId;
 
     /**
