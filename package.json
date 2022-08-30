@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@ethersproject/providers": "^5.4.7",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
