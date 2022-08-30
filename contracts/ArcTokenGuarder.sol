@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./interfaces/IBEP20.sol";
+// import "./interfaces/IBEP20.sol";
 import "./ArcGuarder.sol";
+
+interface IBEP20{
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address recipient, uint256 amount) external returns (bool);
+}
 
 contract ArcTokenGuarder is ArcGuarder {
     /**

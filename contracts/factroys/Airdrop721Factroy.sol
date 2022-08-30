@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./interfaces/IAirdropFactory.sol";
-import "./ArcGuarder.sol";
-import "./libraries/Clones.sol";
-import "./TokenAirdropTemplate.sol";
+import "../interfaces/IAirdropFactory.sol";
+import "../ArcGuarder.sol";
+import "../libraries/Clones.sol";
+import "../templates/Airdrop721Template.sol";
 
 contract TokenAirdropFactory is IAirdropFactory, ArcGuarder {
     address[] public airdrops;
@@ -14,11 +14,11 @@ contract TokenAirdropFactory is IAirdropFactory, ArcGuarder {
         whenNotPaused
         returns (address)
     {
-        bytes memory codeBytes = type(TokenAirdropTemplate).creationCode;
+        bytes memory codeBytes = type(Airdrop721Template).creationCode;
 
         address instance = Clones.cloneByBytes(codeBytes);
 
-        TokenAirdropTemplate(instance).init(msg.sender);
+        Airdrop721Template(instance).init(msg.sender);
 
         airdrops.push(instance);
 

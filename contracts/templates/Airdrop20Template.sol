@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./libraries/transferHelper.sol";
-import "./interfaces/IBEP20.sol";
-import "./interfaces/IAirdrop.sol";
-import "./ArcPartner.sol";
-import "./ArcTokenGuarder.sol";
-import "./ArcInit.sol";
+import "../libraries/transferHelper.sol";
+import "../interfaces/IAirdrop.sol";
+import "../ArcPartner.sol";
+import "../ArcTokenGuarder.sol";
+import "../ArcInit.sol";
 
-contract TokenAirdropTemplate is
+import "hardhat/console.sol";
+
+contract Airdrop20Template is
     IAirdrop,
     ArcTokenGuarder,
     ArcPartner,
@@ -73,18 +74,14 @@ contract TokenAirdropTemplate is
         uint256 targetId,
         uint256 amount
     ) public lock(id) onlyPartner returns (uint256) {
+
         uint256 _id = _addUserRewards(id, asset);
 
         activities[_id].totalAmounts += amount;
 
         rewards[_id][user][targetId] += amount;
 
-        TransferHelper.safeTransferFrom(
-            asset,
-            msg.sender,
-            address(this),
-            amount
-        );
+        TransferHelper.safeTransferFrom(asset,msg.sender,address(this),amount);
 
         emit AddUserRewards(_id, user, amount);
 
@@ -101,10 +98,7 @@ contract TokenAirdropTemplate is
         uint256[] memory targetIds,
         uint256[] memory amounts
     ) public lock(id) onlyPartner returns (uint256) {
-        require(
-            users.length > 0 &&
-                targetIds.length == users.length &&
-                amounts.length == users.length,
+        require(users.length > 0 && targetIds.length == users.length && amounts.length == users.length,
             "ARC:Array length is error"
         );
 
@@ -212,8 +206,7 @@ contract TokenAirdropTemplate is
         activities[id].isDestroy = true;
 
         address _target = activities[id].target;
-        uint256 remain = activities[id].totalAmounts -
-            activities[id].totalRewardeds;
+        uint256 remain = activities[id].totalAmounts - activities[id].totalRewardeds;
 
         if (remain > 0) {
             require(
