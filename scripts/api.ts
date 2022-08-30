@@ -25,7 +25,7 @@ if (!apiHost || !abiDir || !abiFiles || !contracts) {
 
 const contractList = contracts.split(",")
 var sceneMap = new Map();
-contractList.forEach(row => {
+contractList.forEach((row:any) => {
   sceneMap.set(row, row.toUpperCase());
 });
 
@@ -185,5 +185,5 @@ export{
   checkHealthy,
   postAddr,
   getArcGovernance,
-  contracts,
+  contractList,
 }

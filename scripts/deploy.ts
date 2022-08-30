@@ -3,8 +3,7 @@ import {
   syncContracts,
   checkHealthy,
   postAddr,
-  getArcGovernance,
-  contracts,
+  contractList,
 } from './api';
 
 import { ethers } from "hardhat";
@@ -26,7 +25,7 @@ async function main() {
 
   // console.log("arc governance:", arcGovernance)
 
-  let contractsList = contracts.split(',')
+  let contractsList = contractList;
 
   if (contractsList.length == 0) {
     console.error('no contract to deploy');

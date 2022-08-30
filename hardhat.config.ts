@@ -1,9 +1,11 @@
 // require('@nomiclabs/hardhat-waffle');
 import { HardhatUserConfig } from "hardhat/config";
+import "@nomiclabs/hardhat-ethers";
 
-const path = require('path');
-const dotenv = require('dotenv')
-const file = path.join("~", ".env-secret");
+import { join } from 'path';
+
+import dotenv from 'dotenv';
+const file = join("~", ".env-secret");
 
 const envConfig = dotenv.config({
   path: file
