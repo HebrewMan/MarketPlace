@@ -14,7 +14,7 @@ import "../ArcInit.sol";
 import "hardhat/console.sol";
 
 contract Airdrop1155Template is
-    IAirdrop,
+    IAirdrop, 
     ArcTokenGuarder,
     ArcPartner,
     ArcInit

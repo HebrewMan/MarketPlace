@@ -16,15 +16,16 @@ contract Airdrop721Template is
     IAirdrop,
     ArcTokenGuarder,
     ArcPartner,
-    ArcInit
+    ArcInit,
+    ERC721Holder
 {
 
     // activityId => Activity info
-    mapping(uint256 => Activity) public activities;
+    mapping(uint => Activity) public activities;
 
-    mapping( uint => mapping(address => uint)) public rewards;
+    mapping(uint => mapping(address => uint[])) internal rewards;
 
-    uint[] tokenIds;
+    uint[] public tokenIds;
 
     // The activity that creates the activity is to be used
     uint256 public currentId;
@@ -76,13 +77,22 @@ contract Airdrop721Template is
         address user,
         uint256 targetId,
         uint256 amount
-    ) public lock(id) returns (uint256 index) {
+    ) public lock(id) returns (uint256) {
 
-         _addUserRewards(id, asset,user,targetId);
+        require(IERC721(asset).ownerOf(targetId) == msg.sender , "ARC: CALLER_NOT_OWNER");
+        require(amount == 1,"ARC: AMOUNT_SHOULD_BE_1");
 
-        id>0? index = id : index = currentId;
+        uint _id = _addUserRewards(id, asset);
 
-        emit AddUserRewards(index, user, targetId);
+        activities[_id].totalAmounts += amount;
+        rewards[_id][user].push(targetId);
+        tokenIds.push(targetId);
+
+        IERC721(asset).safeTransferFrom(msg.sender,address(this),targetId,'0x');
+
+        emit AddUserRewards(_id, user, targetId);
+
+        return _id;
     }
 
     /**
@@ -94,21 +104,27 @@ contract Airdrop721Template is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public lock(id) onlyPartner returns (uint256 index) {
+    ) public lock(id) onlyPartner returns (uint256) {
         require(
             users.length > 0 && targetIds.length == users.length && amounts.length == users.length,
             "ARC:Array length is error"
         );
 
+        uint _id = _addUserRewards(id,asset);
+
         for (uint256 i = 0; i < users.length; i++) {
             require(IERC721(asset).ownerOf(targetIds[i]) == msg.sender , "ARC: CALLER_NOT_OWNER");
+            require(amounts[i] == 1,"ARC: AMOUNT_SHOULD_BE_1");
+            rewards[_id][users[i]].push(targetIds[i]);
+            activities[_id].totalAmounts += 1;
+            tokenIds.push(targetIds[i]);
 
-            _addUserRewards(id,asset,users[i],targetIds[i]);
+            IERC721(asset).safeTransferFrom(msg.sender,address(this),targetIds[i],'0x');
 
-            emit AddUserRewards(index, users[i], targetIds[i]);
+            emit AddUserRewards(_id, users[i], targetIds[i]);
         }
 
-        id>0? index = id : index = currentId;
+        return _id;
     }
 
     /**
@@ -119,9 +135,8 @@ contract Airdrop721Template is
      * @param amount reduce amount
      */
     function removeUserRewards(uint256 id, address user, uint256 targetId, uint256 amount) public lock(id) {
-
-         _removeUserRewards(id, user, targetId);
-
+        _removeUserRewards(id, user, targetId,amount);
+        IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,targetId,'0x');
     }
 
     /**
@@ -132,13 +147,16 @@ contract Airdrop721Template is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public lock(id) {
+    )  public lock(id) {
         require( targetIds.length == users.length && amounts.length == users.length,
             "ARC:ERR_PARAMS"
         );
 
+        //users 数量 跟 rewards 数量不一定相等
+
         for (uint256 i = 0; i < users.length; i++) {
-            _removeUserRewards(id,users[i],targetIds[i]);
+            _removeUserRewards(id,users[i],targetIds[i],amounts[i]);
+             IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,targetIds[i],'0x');
         }
             
     }
@@ -185,20 +203,21 @@ contract Airdrop721Template is
         noPaused(id)
         whenNotPaused
     {
-        require(id > 0 && id <= currentId, "ARC:ERRID");
+
+        require(id > 0 && id <= currentId, "ARC:ERR_ID");
         require(activities[id].status, "ARC:STOPED");
 
-        uint256 _reward = rewards[id][msg.sender];
+        uint[] storage rewardsTokenids = rewards[id][msg.sender];
+        require(rewardsTokenids.length > 0, "ARC:NO_REWARD");
 
-        require(_reward > 0, "ARC:NO_REWARD");
+        for(uint i; i< rewardsTokenids.length;i++){
+            IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,rewardsTokenids[i],'0x');
+            activities[id].totalRewardeds += 1;
+            emit WithdrawRewards(id, msg.sender, rewardsTokenids[i], rewardsTokenids.length);
+        }
 
-        IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,targetId,'0x');
+        delete rewards[id][msg.sender];
 
-        rewards[id][msg.sender] = 0;
-
-        activities[id].totalRewardeds += 1;
-
-        emit WithdrawRewards(id, msg.sender, targetId, _reward);
     }
 
     function openActivity(uint256 id) public onlyPartner noDestroy(id) {
@@ -225,11 +244,12 @@ contract Airdrop721Template is
      * @param id activity Id. it should be 0 when it is first created
      * @param asset target token address
      */
-    function _addUserRewards(uint256 id, address asset,address user,uint256 targetId)
+    function _addUserRewards(uint256 id, address asset)
         private
         whenNotPaused
         onlyPartner
         noDestroy(id)
+        returns(uint)
     {
         require(asset != address(0), "ARC:Asset address(0)");
 
@@ -245,16 +265,8 @@ contract Airdrop721Template is
             emit AddActivity(currentId, asset);
         }
 
-        rewards[_id][user] = targetId;
-        activities[_id].totalAmounts += 1;
-
-        tokenIds.push(targetId);
-
-        console.log("token id is ",targetId);
-
         console.log("======== current id is :",_id);
-
-        IERC721(asset).safeTransferFrom(msg.sender,address(this),targetId,'0x');
+        return _id;
 
     }
 
@@ -263,14 +275,16 @@ contract Airdrop721Template is
 
      * @param id activity id
      * @param user user address
-     * @param targetId it should be 0 in this contract.
+     * @param targetId it should be nft tokenId in this contract.
      * @param amount reduce amount
      */
     function _removeUserRewards(
         uint256 id,
         address user,
-        uint256 targetId
+        uint256 targetId,
+        uint amount
     ) private whenNotPaused noDestroy(id) onlyPartner{
+        require(amount == 1,"ARC: AMOUNT_SHOULD_BE_1");
         require(
             id > 0 && id <= currentId && user != address(0),
             "ARC:ERR_PARAMS"
@@ -278,11 +292,27 @@ contract Airdrop721Template is
 
         require(IERC721(activities[id].target).ownerOf(targetId) == address(this),"ARC: AMOUNT_ERROR");
 
-        IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,targetId,'0x');
+        activities[id].totalAmounts -= amount;
 
-        rewards[id][user] = 0;
-        activities[id].totalAmounts -= 1;
+        for(uint i; i< tokenIds.length; i++){
+            if(targetId == tokenIds[i]){
+                tokenIds[i] = tokenIds[i + 1];
+                tokenIds.pop();
+            }
+        }
+
+        for(uint i; i< rewards[id][user].length; i++){
+            if(targetId == rewards[id][user][i]){
+                rewards[id][user][i] = rewards[id][user][i + 1];
+                rewards[id][user].pop();
+            }
+        }
+
 
         emit RemoveUserRewards(id, user,targetId,1);
+    }
+
+    function getUserRewards(uint id, address user)external view returns(uint[] memory){
+        return rewards[id][user];
     }
 }

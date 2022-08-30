@@ -1,6 +1,7 @@
 const path = require("path");
 const dotenv = require('dotenv')
-const fs = require('fs')
+import fs from 'fs';
+// const fs = require('fs')
 
 const envFile = path.join(__dirname, "..", ".env");
 const config = dotenv.config({
@@ -41,7 +42,7 @@ const checkHealthy = async () => {
 
 const getArcGovernance = async () => {
   console.log("get arc governance......")
-  const rs = await reqGet("/factory/sceneAddr?scene=ARCGOVERNANCE");
+  const rs:any = await reqGet("/factory/sceneAddr?scene=ARCGOVERNANCE");
   if (rs === false) {
     return false;
   }
@@ -94,7 +95,7 @@ const syncContracts = async () => {
 }
 
 // update contract address
-const postAddr = async (contractKey, addr) => {
+const postAddr = async (contractKey:string, addr:string) => {
   console.log("update contract address......")
   if (!contractKey) {
     console.error("undefined contract key");
@@ -125,13 +126,11 @@ const postAddr = async (contractKey, addr) => {
 }
 
 // get request
-const reqGet = async (uri) => {
+const reqGet = async (uri:string) => {
   const request = require('request')
 
   return await new Promise((resolve, reject) => {
-    request.get({
-      url: apiHost + uri,
-    }, function (error, response, body) {
+    request.get({url: apiHost + uri,}, function (error:any, response:any, body:any) {
       if (!error && response.statusCode == 200) {
         return resolve(body);
       }
@@ -142,14 +141,14 @@ const reqGet = async (uri) => {
 
 
 // post request
-const reqPost = async (uri, data) => {
+const reqPost = async (uri:string, data:any) => {
   const request = require('request')
 
   return await new Promise((resolve, reject) => {
     request.post({
       url: apiHost + uri,
       form: data
-    }, function (error, response) {
+    }, function (error:any, response:any) {
       if (!error && response.statusCode == 200) {
         return resolve(true);
       }
@@ -159,7 +158,7 @@ const reqPost = async (uri, data) => {
 }
 
 // Check whether the file exists and has access rights
-function checkFile(fileName) {
+function checkFile(fileName:any) {
   fs.access(fileName, fs.constants.F_OK, (err) => {
     if (err) {
       console.error(`${fileName} does not exist`);
@@ -177,10 +176,14 @@ function checkFile(fileName) {
   return true;
 }
 
-module.exports = {
+// module.exports = {
+
+// }
+
+export{
   syncContracts,
   checkHealthy,
   postAddr,
   getArcGovernance,
-  contracts: contracts,
+  contracts,
 }
