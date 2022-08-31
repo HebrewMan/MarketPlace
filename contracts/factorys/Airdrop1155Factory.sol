@@ -6,7 +6,7 @@ import "../ArcGuarder.sol";
 import "../libraries/Clones.sol";
 import "../templates/Airdrop1155Template.sol";
 
-contract Airdrop1155Factroy is IAirdropFactory, ArcGuarder {
+contract Airdrop1155Factory is IAirdropFactory, ArcGuarder {
     address[] public airdrops;
 
     function createAirdropContract()
