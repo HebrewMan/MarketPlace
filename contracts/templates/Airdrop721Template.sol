@@ -9,8 +9,6 @@ import "../ArcPartner.sol";
 import "../ArcTokenGuarder.sol";
 import "../ArcInit.sol";
 
-import "hardhat/console.sol";
-
 contract Airdrop721Template is
     IAirdrop,
     ArcTokenGuarder,
@@ -179,8 +177,6 @@ contract Airdrop721Template is
             NFT.safeTransferFrom(address(this), msg.sender, tokenIds[i]);
         }
 
-        emit DestroyActivity(id,tokenIds.length);
-
         delete activities[id];
         delete tokenIds;
 
@@ -220,7 +216,6 @@ contract Airdrop721Template is
             emit WithdrawRewards(id, msg.sender, _rewards[i], _rewards.length);
         }
        
-
         delete rewards[id][msg.sender];
 
     }
@@ -232,11 +227,7 @@ contract Airdrop721Template is
         emit SetStatus(id, true);
     }
 
-    function closeActivity(uint256 id)
-        external
-        onlyPartner
-        lock(id)
-        noDestroy(id)
+    function closeActivity(uint256 id) external onlyPartner lock(id) noDestroy(id)
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
         activities[id].status = false;
@@ -289,10 +280,8 @@ contract Airdrop721Template is
         uint amount
     ) private whenNotPaused noDestroy(id) onlyPartner{
         require(amount == 1,"ARC: AMOUNT_SHOULD_BE_1");
-        require(
-            id > 0 && id <= currentId && user != address(0),
-            "ARC:ERR_PARAMS"
-        );
+        require(_checkUserRewards(id,user,targetId),"ARC: USER_IS_NOT_NFT_OWNER");
+        require(id > 0 && id <= currentId,"ARC:ERR_PARAMS");
 
         require(IERC721(activities[id].target).ownerOf(targetId) == address(this),"ARC: AMOUNT_ERROR");
 
@@ -306,6 +295,7 @@ contract Airdrop721Template is
         }
 
         uint[] storage _rewards = rewards[id][user];
+
         for(uint i; i< _rewards.length; i++){
             if(targetId == _rewards[i]){
                 _rewards[i] = _rewards[_rewards.length-1];
@@ -316,6 +306,17 @@ contract Airdrop721Template is
         emit RemoveUserRewards(id, user,targetId,1);
     }
 
+    function _checkUserRewards(uint id,address user,uint targetId) private view returns(bool isExsit){
+        uint[] memory _rewards = rewards[id][user];
+
+        for(uint i; i< _rewards.length; i++){
+            if(targetId == _rewards[i]){
+                isExsit = true;
+            }
+        }
+
+    }
+
     function getTokenIdsLength()external view returns(uint){
         return tokenIds.length;
     }
@@ -323,4 +324,5 @@ contract Airdrop721Template is
     function getUserRewards(uint id, address user)external view returns(uint[] memory _tokenIds){
         activities[id].isDestroy == true?  _tokenIds = _tokenIds : _tokenIds = rewards[id][user];
     }
+
 }
