@@ -1,9 +1,9 @@
-const path = require("path");
-const dotenv = require('dotenv')
-import fs from 'fs';
-// const fs = require('fs')
 
-const envFile = path.join(__dirname, "..", ".env");
+import dotenv from 'dotenv';
+import { join } from 'path';
+import fs from 'fs';
+
+const envFile = join(__dirname, "..", ".env");
 const config = dotenv.config({
   path: envFile
 }).parsed;
@@ -63,7 +63,7 @@ const syncContracts = async () => {
 
   for (let i = 0; i < files.length; i++) {
     let name = files[i];
-    let file = path.join(__dirname, "..", abiDir, name + ".sol", name + ".json");
+    let file = join(__dirname, "..", abiDir, name + ".sol", name + ".json");
 
     if (!checkFile(file)) {
       return false;

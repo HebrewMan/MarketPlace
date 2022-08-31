@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
-import "../libraries/transferHelper.sol";
 import "../interfaces/IAirdrop.sol";
 import "../ArcPartner.sol";
 import "../ArcTokenGuarder.sol";
@@ -28,7 +27,7 @@ contract Airdrop721Template is
     uint[] public tokenIds;
 
     // The activity that creates the activity is to be used
-    uint256 public currentId;
+    uint256 internal currentId;
 
     /**
      * @dev Modifier to allow actions only when the activity is not paused
@@ -77,7 +76,7 @@ contract Airdrop721Template is
         address user,
         uint256 targetId,
         uint256 amount
-    ) public lock(id) returns (uint256) {
+    ) external lock(id) returns (uint256) {
 
         require(IERC721(asset).ownerOf(targetId) == msg.sender , "ARC: CALLER_NOT_OWNER");
         require(amount == 1,"ARC: AMOUNT_SHOULD_BE_1");
@@ -104,7 +103,7 @@ contract Airdrop721Template is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public lock(id) onlyPartner returns (uint256) {
+    ) external lock(id) onlyPartner returns (uint256) {
         require(
             users.length > 0 && targetIds.length == users.length && amounts.length == users.length,
             "ARC:Array length is error"
@@ -134,7 +133,7 @@ contract Airdrop721Template is
      * @param targetId it should be 0 in this contract
      * @param amount reduce amount
      */
-    function removeUserRewards(uint256 id, address user, uint256 targetId, uint256 amount) public lock(id) {
+    function removeUserRewards(uint256 id, address user, uint256 targetId, uint256 amount) external lock(id) {
         _removeUserRewards(id, user, targetId,amount);
         IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,targetId,'0x');
     }
@@ -147,12 +146,10 @@ contract Airdrop721Template is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    )  public lock(id) {
+    )  external lock(id) {
         require( targetIds.length == users.length && amounts.length == users.length,
             "ARC:ERR_PARAMS"
         );
-
-        //users 数量 跟 rewards 数量不一定相等
 
         for (uint256 i = 0; i < users.length; i++) {
             _removeUserRewards(id,users[i],targetIds[i],amounts[i]);
@@ -168,7 +165,7 @@ contract Airdrop721Template is
      * 2. transfer remain amount of this activity to partner
      */
     function destroyActivity(uint256 id)
-        public
+        external
         onlyPartner
         lock(id)
         whenNotPaused
@@ -176,20 +173,19 @@ contract Airdrop721Template is
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
 
-        activities[id].status = false; // stop activity
-        activities[id].isDestroy = true;
-
         IERC721 NFT = IERC721(activities[id].target);
-
-        emit DestroyActivity(id,tokenIds.length);
 
         for(uint i; i< tokenIds.length; i++){
             NFT.safeTransferFrom(address(this), msg.sender, tokenIds[i]);
         }
 
+        emit DestroyActivity(id,tokenIds.length);
+
         delete activities[id];
         delete tokenIds;
 
+        activities[id].status = false;
+        activities[id].isDestroy = true;
     }
 
     /**
@@ -198,7 +194,7 @@ contract Airdrop721Template is
      * @param targetId it should be 0 in this contract.
      */
     function withdrawRewards(uint256 id, uint256 targetId)
-        public
+        external
         lock(id)
         noPaused(id)
         whenNotPaused
@@ -207,20 +203,29 @@ contract Airdrop721Template is
         require(id > 0 && id <= currentId, "ARC:ERR_ID");
         require(activities[id].status, "ARC:STOPED");
 
-        uint[] storage rewardsTokenids = rewards[id][msg.sender];
-        require(rewardsTokenids.length > 0, "ARC:NO_REWARD");
+        uint[] storage _rewards = rewards[id][msg.sender];
+        require(_rewards.length > 0, "ARC:NO_REWARD");
 
-        for(uint i; i< rewardsTokenids.length;i++){
-            IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,rewardsTokenids[i],'0x');
+        for(uint i; i< _rewards.length;i++){
+            IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,_rewards[i],'0x');
             activities[id].totalRewardeds += 1;
-            emit WithdrawRewards(id, msg.sender, rewardsTokenids[i], rewardsTokenids.length);
+
+            for(uint k; k< tokenIds.length;k++){
+                if(_rewards[i] == tokenIds[k]){
+                    tokenIds[k] = tokenIds[tokenIds.length-1];
+                    tokenIds.pop();
+                }
+            }
+
+            emit WithdrawRewards(id, msg.sender, _rewards[i], _rewards.length);
         }
+       
 
         delete rewards[id][msg.sender];
 
     }
 
-    function openActivity(uint256 id) public onlyPartner noDestroy(id) {
+    function openActivity(uint256 id) external onlyPartner noDestroy(id) {
         require(id > 0 && id <= currentId, "ARC:ERRID");
         activities[id].status = true;
 
@@ -228,7 +233,7 @@ contract Airdrop721Template is
     }
 
     function closeActivity(uint256 id)
-        public
+        external
         onlyPartner
         lock(id)
         noDestroy(id)
@@ -265,7 +270,6 @@ contract Airdrop721Template is
             emit AddActivity(currentId, asset);
         }
 
-        console.log("======== current id is :",_id);
         return _id;
 
     }
@@ -296,23 +300,27 @@ contract Airdrop721Template is
 
         for(uint i; i< tokenIds.length; i++){
             if(targetId == tokenIds[i]){
-                tokenIds[i] = tokenIds[i + 1];
+                tokenIds[i] = tokenIds[tokenIds.length-1];
                 tokenIds.pop();
             }
         }
 
-        for(uint i; i< rewards[id][user].length; i++){
-            if(targetId == rewards[id][user][i]){
-                rewards[id][user][i] = rewards[id][user][i + 1];
-                rewards[id][user].pop();
+        uint[] storage _rewards = rewards[id][user];
+        for(uint i; i< _rewards.length; i++){
+            if(targetId == _rewards[i]){
+                _rewards[i] = _rewards[_rewards.length-1];
+                _rewards.pop();
             }
         }
-
 
         emit RemoveUserRewards(id, user,targetId,1);
     }
 
-    function getUserRewards(uint id, address user)external view returns(uint[] memory){
-        return rewards[id][user];
+    function getTokenIdsLength()external view returns(uint){
+        return tokenIds.length;
+    }
+
+    function getUserRewards(uint id, address user)external view returns(uint[] memory _tokenIds){
+        activities[id].isDestroy == true?  _tokenIds = _tokenIds : _tokenIds = rewards[id][user];
     }
 }
