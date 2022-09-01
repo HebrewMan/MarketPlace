@@ -18,31 +18,9 @@ contract ArcGuarder {
     /**
      * @dev Access modifier for cashier only functionality
      */
-    modifier onlyCashier() {
+    modifier onlyRole(uint roleId) {
         require(
-            IArcGovernance(_governance).cashier() == msg.sender,
-            "ARC:Denied"
-        );
-        _;
-    }
-
-    /**
-     * @dev Access modifier for master only functionality
-     */
-    modifier onlyMaster() {
-        require(
-            IArcGovernance(_governance).master() == msg.sender,
-            "ARC:Denied"
-        );
-        _;
-    }
-
-    /**
-     * @dev Access modifier for system only functionality
-     */
-    modifier onlySystem() {
-        require(
-            IArcGovernance(_governance).system() == msg.sender,
+            IArcGovernance(_governance).getRoleAddress(roleId) == msg.sender,
             "ARC:Denied"
         );
         _;
@@ -76,7 +54,7 @@ contract ArcGuarder {
      * @dev Called by any woner role to pause the contract. Used only when
      *  a bug or exploit is detected and we need to limit damage.
      */
-    function pause() public onlySystem whenNotPaused {
+    function pause() public onlyRole(2) whenNotPaused {
         paused = true;
     }
 
@@ -85,7 +63,7 @@ contract ArcGuarder {
      *  one reason we may pause the contract is when CFO or COO accounts are compromised.
      * @notice This is public rather than external so it can be called by derived contracts.
      */
-    function unpaused() public onlySystem whenPaused {
+    function unpaused() public onlyRole(2) whenPaused {
         paused = false;
     }
 
@@ -93,7 +71,7 @@ contract ArcGuarder {
      * @dev an public method to set manager contract with permission. master only!
      * @param addr address
      */
-    function setGovernance(address addr) public onlyMaster {
+    function setGovernance(address addr) public onlyRole(1) {
         _setGovernance(addr);
     }
 
@@ -103,7 +81,6 @@ contract ArcGuarder {
      */
     function _setGovernance(address addr) internal {
         require(addr != address(0), "ARC:ADDR0");
-        require(IArcGovernance(addr).master() != address(0), "ARC:ADDR0");
         _governance = addr;
     }
 }

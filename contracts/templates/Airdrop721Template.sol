@@ -5,72 +5,20 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 import "../interfaces/IAirdrop.sol";
-import "../ArcPartner.sol";
-import "../ArcInit.sol";
+import "../ArcGuarder.sol";
+
+import "../ArcCommon.sol";
 
 contract Airdrop721Template is
-    IAirdrop,
-    ArcPartner,
     ArcInit,
-    ERC721Holder
+    ERC721Holder,
+    ArcGuarder,
+    ArcCommon
 {
-
-    // activityId => Activity info
-    mapping(uint => Activity) public activities;
 
     mapping(uint => mapping(address => uint[])) internal rewards;
 
     uint[] internal tokenIds;
-
-    // The activity that creates the activity is to be used
-    uint256 internal currentId;
-
-    /**
-     * @dev Modifier to allow actions only when the activity is paused
-     */
-    modifier IsPaused(uint256 id) {
-        require(id > 0, "ARC:ERRID");
-        require(!activities[id].status, "ARC:ACTIV_PAUSED");
-        _;
-    }
-
-    /**
-     * @dev Modifier to allow actions only when the activity is not paused
-     */
-    modifier noPaused(uint256 id) {
-        require(id > 0, "ARC:ERRID");
-        require(activities[id].status, "ARC:ACTIV_PAUSED");
-        _;
-    }
-
-    /**
-     * @dev Modifier to allow actions only when the activity is not destroy
-     */
-    modifier noDestroy(uint256 id) {
-        if (id > 0) {
-            require(!activities[id].isDestroy, "ARC:DESTROYED");
-        }
-        _;
-    }
-
-    modifier lock(uint256 id) {
-        if (id > 0) {
-            require(activities[id].unlocked, "ARC:LOCKED");
-            activities[id].unlocked = false;
-            _;
-            activities[id].unlocked = true;
-        } else {
-            _;
-        }
-    }
-
-    /**
-     * @dev Initialize
-     * @param partner address of partner, like owner
-     */
-    function init(address partner) public isInit {
-        _setPartner(partner);
-    }
 
     /**
      * @dev public function for adding a user's reward rule.
@@ -173,7 +121,7 @@ contract Airdrop721Template is
         onlyPartner
         lock(id)
         noDestroy(id)
-        IsPaused(id)
+        whenNotPaused
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
 
@@ -198,6 +146,7 @@ contract Airdrop721Template is
         external
         lock(id)
         noPaused(id)
+        whenNotPaused
     {
 
         require(id > 0 && id <= currentId, "ARC:ERR_ID");
@@ -223,21 +172,6 @@ contract Airdrop721Template is
 
     }
 
-    function openActivity(uint256 id) external onlyPartner noDestroy(id) {
-        require(id > 0 && id <= currentId, "ARC:ERRID");
-        activities[id].status = true;
-
-        emit SetStatus(id, true);
-    }
-
-    function closeActivity(uint256 id) external onlyPartner lock(id) noDestroy(id)
-    {
-        require(id > 0 && id <= currentId, "ARC:ERRID");
-        activities[id].status = false;
-
-        emit SetStatus(id, false);
-    }
-
     /*
      * @dev private function for adding user's reward rule. Cumulative reward! if the user reward is 0.
      * @param id activity Id. it should be 0 when it is first created
@@ -247,6 +181,7 @@ contract Airdrop721Template is
         private
         onlyPartner
         noDestroy(id)
+        whenNotPaused
         returns(uint)
     {
         uint _id = id;
@@ -278,7 +213,7 @@ contract Airdrop721Template is
         address user,
         uint256 targetId,
         uint amount
-    ) private noDestroy(id) onlyPartner{
+    ) private noDestroy(id) whenNotPaused onlyPartner{
         require(amount == 1,"ARC: NOT_1");
         require(_checkUserRewards(id,user,targetId),"ARC: USER_ERROR");
         require(id > 0 && id <= currentId,"ARC:ERR_PARAMS");
