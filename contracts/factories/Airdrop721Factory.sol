@@ -2,13 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IAirdropFactory.sol";
-import "../ArcGuarder.sol";
 import "../libraries/Clones.sol";
 import "../templates/Airdrop721Template.sol";
+import "./ArcPause.sol";
 
-contract Airdrop721Factory is IAirdropFactory, ArcGuarder {
+contract Airdrop721Factory is IAirdropFactory, ArcPause {
 
     address[] public airdrops;
+
+    uint public length;
 
     function createAirdropContract() external whenNotPaused returns (address) {
         bytes memory codeBytes = type(Airdrop721Template).creationCode;
@@ -19,15 +21,11 @@ contract Airdrop721Factory is IAirdropFactory, ArcGuarder {
 
         airdrops.push(instance);
 
+        length++;
+
         emit CreateAirdropContract(instance);
 
         return instance;
     }
 
-    /**
-     * @dev Get the number of airdrop contracts.
-     */
-    function airdropsLength() external view returns (uint256) {
-        return airdrops.length;
-    }
 }

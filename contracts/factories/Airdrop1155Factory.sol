@@ -9,6 +9,8 @@ import "../templates/Airdrop1155Template.sol";
 contract Airdrop1155Factory is IAirdropFactory, ArcGuarder {
     address[] public airdrops;
 
+    uint public length;
+
     function createAirdropContract()
         external
         whenNotPaused
@@ -22,15 +24,10 @@ contract Airdrop1155Factory is IAirdropFactory, ArcGuarder {
 
         airdrops.push(instance);
 
+        length++;
+
         emit CreateAirdropContract(instance);
 
         return instance;
-    }
-
-    /**
-     * @dev Get the number of airdrop contracts.
-     */
-    function airdropsLength() external view returns (uint256) {
-        return airdrops.length;
     }
 }

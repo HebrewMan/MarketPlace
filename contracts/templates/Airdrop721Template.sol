@@ -4,17 +4,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
-import "../interfaces/IAirdrop.sol";
-import "../ArcGuarder.sol";
+import "./ArcBase.sol";
 
-import "../ArcCommon.sol";
-
-contract Airdrop721Template is
-    ArcInit,
-    ERC721Holder,
-    ArcGuarder,
-    ArcCommon
-{
+contract Airdrop721Template is ERC721Holder, ArcBase{
 
     mapping(uint => mapping(address => uint[])) internal rewards;
 

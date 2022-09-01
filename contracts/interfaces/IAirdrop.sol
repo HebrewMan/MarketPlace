@@ -9,7 +9,6 @@ struct Activity {
     bool isDestroy;
     bool unlocked;
 }
-
     
 interface IAirdrop {
 

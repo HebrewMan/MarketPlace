@@ -4,11 +4,10 @@ pragma solidity ^0.8.0;
 import "../libraries/transferHelper.sol";
 import "../ArcTokenGuarder.sol";
 
-import "../ArcConfig.sol";
-import "hardhat/console.sol";
+import "./ArcBase.sol";
 contract Airdrop20Template is
     ArcTokenGuarder,
-    ArcConfig,
+    ArcBase
 {
 
     // activityId => ( userAddress => ( targetId => reward ) )

@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ArcInit.sol";
-import "./interfaces/IAirdrop.sol";
+import "../ArcInit.sol";
+import "../interfaces/IAirdrop.sol";
 
-import "./ArcPartner.sol";
+import "../ArcPartner.sol";
+import "../ArcGuarder.sol";
 
-abstract contract ArcCommon is ArcInit,ArcPartner,IAirdrop{
+abstract contract ArcBase is ArcInit,ArcPartner,IAirdrop,ArcGuarder{
 
     mapping(uint256 => Activity) public activities;
 
     // The activity that creates the activity is to be used
     uint256 public currentId;
 
-/**
+    /**
      * @dev Modifier to allow actions only when the activity is not paused
      */
     modifier noPaused(uint256 id) {
@@ -27,10 +28,15 @@ abstract contract ArcCommon is ArcInit,ArcPartner,IAirdrop{
      */
     modifier noDestroy(uint256 id) {
         if (id > 0) {
-            require(!activities[id].isDestroy, "ARC:DESTROYED");
+            require(!activities[id].isDestroy && activities[id].status, "ARC:DESTROYED");
         }
         _;
     }
+
+    // modifier isNormal(uint256 id){
+    //     require(!activities[id].isDestroy && activities[id].status, "ARC:DESTROYED");
+    //     _;
+    // }
 
     modifier lock(uint256 id) {
         if (id > 0) {
@@ -59,6 +65,7 @@ abstract contract ArcCommon is ArcInit,ArcPartner,IAirdrop{
         emit SetStatus(id, true);
     }
 
+
     function closeActivity(uint256 id) external onlyPartner lock(id) noDestroy(id)
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
@@ -66,5 +73,4 @@ abstract contract ArcCommon is ArcInit,ArcPartner,IAirdrop{
 
         emit SetStatus(id, false);
     }
-
 }
