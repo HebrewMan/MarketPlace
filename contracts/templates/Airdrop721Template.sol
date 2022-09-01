@@ -18,7 +18,7 @@ contract Airdrop721Template is
 {
 
     // activityId => Activity info
-    mapping(uint => Activity) internal activities;
+    mapping(uint => Activity) public activities;
 
     mapping(uint => mapping(address => uint[])) internal rewards;
 
@@ -311,10 +311,6 @@ contract Airdrop721Template is
                 isExsit = true;
             }
         }
-    }
-
-    function getTokenIdsLength()external view returns(uint){
-        return tokenIds.length;
     }
 
     function getUserRewards(uint id, address user)external view returns(uint[] memory _tokenIds){

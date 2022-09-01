@@ -102,7 +102,7 @@ contract Airdrop1155Template is
         id>0? index = id : index = currentId;
 
         emit AddUserRewards(index, user, amount);
-
+ 
     }
 
     /**
@@ -267,7 +267,7 @@ contract Airdrop1155Template is
             _id = currentId;
             activities[currentId].target = asset;
             activities[currentId].unlocked = true;
-            emit AddActivity(currentId, asset);
+            emit AddActivity(currentId,asset);
         }
 
         rewards[_id][user][targetId] += amount;
