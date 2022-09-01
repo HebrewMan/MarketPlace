@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// import "./interfaces/IBEP20.sol";
 import "./ArcGuarder.sol";
 
 interface IBEP20{
@@ -15,7 +14,6 @@ contract ArcTokenGuarder is ArcGuarder {
      * @param token Token of the asset to be migrated
      */
     function emergencyMigrateAsset(address token) public onlyCashier {
-        require(token != address(0), "ARC:TOKEN_ZERO");
         uint256 balance = IBEP20(token).balanceOf(address(this));
         require(balance > 0, "ARC:NO_BALANCE");
         IBEP20(token).transfer(msg.sender, balance);

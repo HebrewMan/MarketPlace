@@ -10,7 +10,7 @@ contract Airdrop1155Factory is IAirdropFactory, ArcGuarder {
     address[] public airdrops;
 
     function createAirdropContract()
-        public
+        external
         whenNotPaused
         returns (address)
     {
@@ -30,7 +30,7 @@ contract Airdrop1155Factory is IAirdropFactory, ArcGuarder {
     /**
      * @dev Get the number of airdrop contracts.
      */
-    function airdropsLength() public view returns (uint256) {
+    function airdropsLength() external view returns (uint256) {
         return airdrops.length;
     }
 }

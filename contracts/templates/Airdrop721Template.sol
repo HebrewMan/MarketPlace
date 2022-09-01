@@ -18,11 +18,11 @@ contract Airdrop721Template is
 {
 
     // activityId => Activity info
-    mapping(uint => Activity) public activities;
+    mapping(uint => Activity) internal activities;
 
     mapping(uint => mapping(address => uint[])) internal rewards;
 
-    uint[] public tokenIds;
+    uint[] internal tokenIds;
 
     // The activity that creates the activity is to be used
     uint256 internal currentId;
@@ -74,8 +74,7 @@ contract Airdrop721Template is
         address user,
         uint256 targetId,
         uint256 amount
-    ) external lock(id) returns (uint256) {
-
+    ) public lock(id) returns (uint256) {
         require(IERC721(asset).ownerOf(targetId) == msg.sender , "ARC: CALLER_NOT_OWNER");
         require(amount == 1,"ARC: AMOUNT_SHOULD_BE_1");
 
@@ -101,10 +100,10 @@ contract Airdrop721Template is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) external lock(id) onlyPartner returns (uint256) {
+    ) public lock(id) onlyPartner returns (uint256) {
         require(
             users.length > 0 && targetIds.length == users.length && amounts.length == users.length,
-            "ARC:Array length is error"
+            "ARC: LENGTH_ERROR"
         );
 
         uint _id = _addUserRewards(id,asset);
@@ -131,7 +130,7 @@ contract Airdrop721Template is
      * @param targetId it should be 0 in this contract
      * @param amount reduce amount
      */
-    function removeUserRewards(uint256 id, address user, uint256 targetId, uint256 amount) external lock(id) {
+    function removeUserRewards(uint256 id, address user, uint256 targetId, uint256 amount) public lock(id) {
         _removeUserRewards(id, user, targetId,amount);
         IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,targetId,'0x');
     }
@@ -144,7 +143,7 @@ contract Airdrop721Template is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    )  external lock(id) {
+    )  public lock(id) {
         require( targetIds.length == users.length && amounts.length == users.length,
             "ARC:ERR_PARAMS"
         );
@@ -163,7 +162,7 @@ contract Airdrop721Template is
      * 2. transfer remain amount of this activity to partner
      */
     function destroyActivity(uint256 id)
-        external
+        public
         onlyPartner
         lock(id)
         whenNotPaused
@@ -247,12 +246,10 @@ contract Airdrop721Template is
         noDestroy(id)
         returns(uint)
     {
-        require(asset != address(0), "ARC:Asset address(0)");
-
         uint _id = id;
 
         if (id > 0) {
-            require(activities[id].target == asset, "ARC: Asset address is error");
+            require(activities[id].target == asset, "ARC: ASSET_ERROR");
         } else {
             currentId += 1;
             _id = currentId;
@@ -280,7 +277,7 @@ contract Airdrop721Template is
         uint amount
     ) private whenNotPaused noDestroy(id) onlyPartner{
         require(amount == 1,"ARC: AMOUNT_SHOULD_BE_1");
-        require(_checkUserRewards(id,user,targetId),"ARC: USER_IS_NOT_NFT_OWNER");
+        require(_checkUserRewards(id,user,targetId),"ARC: USER_ERROR");
         require(id > 0 && id <= currentId,"ARC:ERR_PARAMS");
 
         require(IERC721(activities[id].target).ownerOf(targetId) == address(this),"ARC: AMOUNT_ERROR");
@@ -314,7 +311,6 @@ contract Airdrop721Template is
                 isExsit = true;
             }
         }
-
     }
 
     function getTokenIdsLength()external view returns(uint){

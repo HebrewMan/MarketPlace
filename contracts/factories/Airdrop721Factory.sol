@@ -6,7 +6,7 @@ import "../ArcGuarder.sol";
 import "../libraries/Clones.sol";
 import "../templates/Airdrop721Template.sol";
 
-contract TokenAirdropFactory is IAirdropFactory, ArcGuarder {
+contract Airdrop721Factory is IAirdropFactory, ArcGuarder {
     address[] public airdrops;
 
     function createAirdropContract()
@@ -30,7 +30,7 @@ contract TokenAirdropFactory is IAirdropFactory, ArcGuarder {
     /**
      * @dev Get the number of airdrop contracts.
      */
-    function airdropsLength() public view returns (uint256) {
+    function airdropsLength() external view returns (uint256) {
         return airdrops.length;
     }
 }

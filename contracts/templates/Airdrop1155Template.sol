@@ -11,8 +11,6 @@ import "../ArcPartner.sol";
 import "../ArcTokenGuarder.sol";
 import "../ArcInit.sol";
 
-import "hardhat/console.sol";
-
 contract Airdrop1155Template is
     IAirdrop, 
     ArcTokenGuarder,
@@ -187,19 +185,18 @@ contract Airdrop1155Template is
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
 
-        activities[id].status = false; // stop activity
-        activities[id].isDestroy = true;
-
         address _target = activities[id].target;
 
         IERC1155(_target).safeBatchTransferFrom(msg.sender,address(this),activities[id].targetIds,activities[id].amounts,'0x');
 
-        delete activities[id];
-        
         for(uint i;i<activities[id].targetIds.length;i++){
-            delete rewards[id][_target][activities[id].targetIds[i]];
             delete targetIdAmounts[id][activities[id].targetIds[i]];
         }
+
+        delete activities[id];
+        
+        activities[id].status = false; // stop activity
+        activities[id].isDestroy = true;
 
     }
 
@@ -261,8 +258,6 @@ contract Airdrop1155Template is
         whenNotPaused
         noDestroy(id)
     {
-        require(asset != address(0), "ARC:Asset address(0)");
-
         uint _id = id;
 
         if (id > 0) {
@@ -281,7 +276,6 @@ contract Airdrop1155Template is
         activities[_id].targetIds.push(targetId);
         activities[_id].amounts.push(amount);
 
-        console.log("======== current id is :",_id);
     }
 
     /**
