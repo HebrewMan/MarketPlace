@@ -7,13 +7,10 @@ import "../libraries/Clones.sol";
 import "../templates/Airdrop721Template.sol";
 
 contract Airdrop721Factory is IAirdropFactory, ArcGuarder {
+
     address[] public airdrops;
 
-    function createAirdropContract()
-        public
-        whenNotPaused
-        returns (address)
-    {
+    function createAirdropContract() external whenNotPaused returns (address) {
         bytes memory codeBytes = type(Airdrop721Template).creationCode;
 
         address instance = Clones.cloneByBytes(codeBytes);

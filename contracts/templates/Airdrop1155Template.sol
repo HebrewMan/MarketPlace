@@ -4,16 +4,12 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
-
-import "../libraries/transferHelper.sol";
 import "../interfaces/IAirdrop.sol";
 import "../ArcPartner.sol";
-import "../ArcTokenGuarder.sol";
 import "../ArcInit.sol";
 
 contract Airdrop1155Template is
     IAirdrop, 
-    ArcTokenGuarder,
     ArcPartner,
     ArcInit
 {
@@ -33,8 +29,8 @@ contract Airdrop1155Template is
     uint256 public currentId;
 
     struct TotalData{
-        uint256 totalAmounts;//总数量
-        uint256 totalRewardeds;//已领取的数量
+        uint256 totalAmounts;
+        uint256 totalRewardeds;
     }
 
     struct Activity_ {
@@ -44,6 +40,16 @@ contract Airdrop1155Template is
         bool unlocked;
         uint[] targetIds;
         uint[] amounts;
+    }
+
+
+    /**
+     * @dev Modifier to allow actions only when the activity is paused
+     */
+    modifier IsPaused(uint256 id) {
+        require(id > 0, "ARC:ERRID");
+        require(!activities[id].status, "ARC:ACTIV_PAUSED");
+        _;
     }
 
     /**
@@ -180,8 +186,8 @@ contract Airdrop1155Template is
         public
         onlyPartner
         lock(id)
-        whenNotPaused
         noDestroy(id)
+        IsPaused(id)
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
 
@@ -195,7 +201,6 @@ contract Airdrop1155Template is
 
         delete activities[id];
         
-        activities[id].status = false; // stop activity
         activities[id].isDestroy = true;
 
     }
@@ -209,7 +214,6 @@ contract Airdrop1155Template is
         public
         lock(id)
         noPaused(id)
-        whenNotPaused
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
         require(activities[id].status, "ARC:STOPED");
@@ -255,7 +259,6 @@ contract Airdrop1155Template is
         uint256 targetId,
         uint256 amount)
         private
-        whenNotPaused
         noDestroy(id)
     {
         uint _id = id;
@@ -291,7 +294,7 @@ contract Airdrop1155Template is
         address user,
         uint256 targetId,
         uint256 amount
-    ) private whenNotPaused noDestroy(id) {
+    ) private noDestroy(id) {
         require(
             id > 0 && id <= currentId && user != address(0) && amount > 0,
             "ARC:ERR_PARAMS"
