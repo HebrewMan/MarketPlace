@@ -4,39 +4,13 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
-import "./ArcBase.sol";
+import "./AirdropBase.sol";
 
-contract Airdrop721Template is ERC721Holder, ArcBase{
+contract Airdrop721Template is ERC721Holder, AirdropBase{
 
     mapping(uint => mapping(address => uint[])) internal rewards;
 
     uint[] internal tokenIds;
-
-    /**
-     * @dev public function for adding a user's reward rule.
-     */
-    function addUserRewards(
-        uint256 id,
-        address asset,
-        address user,
-        uint256 targetId,
-        uint256 amount
-    ) public lock(id) returns (uint256) {
-        require(IERC721(asset).ownerOf(targetId) == msg.sender , "ARC: CALLER_NOT_OWNER");
-        require(amount == 1,"ARC: NOT_1");
-
-        uint _id = _addUserRewards(id, asset);
-
-        activities[_id].totalAmounts += amount;
-        rewards[_id][user].push(targetId);
-        tokenIds.push(targetId);
-
-        IERC721(asset).safeTransferFrom(msg.sender,address(this),targetId,'0x');
-
-        emit AddUserRewards(_id, user, targetId);
-
-        return _id;
-    }
 
     /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.

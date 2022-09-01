@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "../ArcInit.sol";
+import "../templates/ActivityStruct.sol";
 import "../interfaces/IAirdrop.sol";
-
 import "../ArcPartner.sol";
 import "../ArcGuarder.sol";
 
-abstract contract ArcBase is ArcInit,ArcPartner,IAirdrop,ArcGuarder{
+abstract contract AirdropBase is ArcInit,ArcPartner,ArcGuarder,IAirdrop{
 
     mapping(uint256 => Activity) public activities;
 

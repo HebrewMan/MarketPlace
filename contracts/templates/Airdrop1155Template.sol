@@ -91,27 +91,6 @@ contract Airdrop1155Template is
     }
 
     /**
-     * @dev public function for adding a user's reward rule.
-     */
-    function addUserRewards(
-        uint256 id,
-        address asset,
-        address user,
-        uint256 targetId,
-        uint256 amount
-    ) public lock(id) onlyPartner returns (uint256 index) {
-
-         _addUserRewards(id, asset,user,targetId,amount);
-
-        IERC1155(asset).safeTransferFrom(msg.sender,address(this),targetId,amount,'0x');
-
-        id>0? index = id : index = currentId;
-
-        emit AddUserRewards(index, user, amount);
- 
-    }
-
-    /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.
      */
     function addUsersRewards(

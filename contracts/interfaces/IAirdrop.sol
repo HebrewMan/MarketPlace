@@ -1,18 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-
-struct Activity {
-    address target;
-    uint256 totalAmounts;
-    uint256 totalRewardeds;
-    bool status;
-    bool isDestroy;
-    bool unlocked;
-}
     
 interface IAirdrop {
 
-    function addUserRewards(uint256 id, address asset, address user, uint256 targetId, uint256 amount) external returns (uint256 index);
+    // function addUserRewards(uint256 id, address asset, address user, uint256 targetId, uint256 amount) external returns (uint256 index);
     function addUsersRewards(uint256 id, address asset, address[] memory users, uint256[] memory targetIds, uint256[] memory amounts) external returns (uint256 index);
     function removeUserRewards(uint256 id, address user, uint256 targetId, uint256 amount) external;
     function removeUsersRewards(uint256 id, address[] memory users, uint256[] memory targetIds, uint256[] memory amounts) external;

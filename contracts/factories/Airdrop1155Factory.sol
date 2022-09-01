@@ -17,13 +17,10 @@ contract Airdrop1155Factory is IAirdropFactory, ArcGuarder {
         returns (address)
     {
         bytes memory codeBytes = type(Airdrop1155Template).creationCode;
-
         address instance = Clones.cloneByBytes(codeBytes);
-
         Airdrop1155Template(instance).init(msg.sender);
 
         airdrops.push(instance);
-
         length++;
 
         emit CreateAirdropContract(instance);

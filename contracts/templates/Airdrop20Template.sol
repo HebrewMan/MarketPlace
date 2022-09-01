@@ -4,39 +4,12 @@ pragma solidity ^0.8.0;
 import "../libraries/transferHelper.sol";
 import "../ArcTokenGuarder.sol";
 
-import "./ArcBase.sol";
-contract Airdrop20Template is
-    ArcTokenGuarder,
-    ArcBase
-{
+import "./AirdropBase.sol";
+contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
 
     // activityId => ( userAddress => ( targetId => reward ) )
     mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
         public rewards;
-
-    /**
-     * @dev public function for adding a user's reward rule.
-     */
-    function addUserRewards(
-        uint256 id,
-        address asset,
-        address user,
-        uint256 targetId,
-        uint256 amount
-    ) public lock(id) onlyPartner returns (uint256) {
-
-        uint256 _id = _addUserRewards(id, asset);
-
-        activities[_id].totalAmounts += amount;
-
-        rewards[_id][user][targetId] += amount;
-
-        TransferHelper.safeTransferFrom(asset,msg.sender,address(this),amount);
-
-        emit AddUserRewards(_id, user, amount);
-
-        return _id;
-    }
 
     /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.
