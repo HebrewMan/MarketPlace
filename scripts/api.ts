@@ -14,10 +14,11 @@ if (!config) {
 }
 
 const apiHost = process.env.API_HOST
+const abiDir = process.env.ABI_DIR
 const abiFiles = process.env.ABI_FILE
 const contracts = process.env.CONTRACTS
 
-if (!apiHost || !abiFiles || !contracts) {
+if (!apiHost || !abiDir || !abiFiles || !contracts) {
   console.error('Configuration file parameter error');
   process.exit(1);
 }
@@ -62,7 +63,7 @@ const syncContracts = async () => {
 
   for (let i = 0; i < files.length; i++) {
     let name = files[i];
-    let file = join(__dirname, "..", name + ".sol", name + ".json");
+    let file = join(__dirname, "..", abiDir, name + ".sol", name + ".json");
 
     if (!checkFile(file)) {
       return false;
