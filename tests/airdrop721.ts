@@ -2,6 +2,7 @@ import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { describe } from "mocha";
 
 describe("Airdrop721", function () {
   
@@ -86,6 +87,7 @@ describe("Airdrop721", function () {
       });
     });
 
+
     describe("Activity Status", function () {
       it("Should emit an event on withdrawals", async function () {
         const { lock, unlockTime, lockedAmount } = await loadFixture(
@@ -99,6 +101,12 @@ describe("Airdrop721", function () {
           .withArgs(lockedAmount, anyValue); // We accept any value as `when` arg
       });
     });
+
+
+    describe("DestoryActivity",function(){});
+
+    describe("openActivity",function(){});
+    describe("closeActivity",function(){});
 
     describe("WithdrawRewards", function () {
       it("Should transfer the funds to the owner", async function () {
@@ -115,19 +123,5 @@ describe("Airdrop721", function () {
       });
     });
 
-    describe("DestoryActivity", function () {
-        it("Should transfer the funds to the owner", async function () {
-          const { lock, unlockTime, lockedAmount, owner } = await loadFixture(
-              deployAirdrop721
-          );
-  
-          await time.increaseTo(unlockTime);
-  
-          await expect(lock.withdraw()).to.changeEtherBalances(
-            [owner, lock],
-            [lockedAmount, -lockedAmount]
-          );
-        });
-      });
   });
 });

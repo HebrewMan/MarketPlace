@@ -1,6 +1,6 @@
 // require('@nomiclabs/hardhat-waffle');
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomiclabs/hardhat-ethers";
+import "@nomicfoundation/hardhat-toolbox";
 
 import { join } from 'path';
 
