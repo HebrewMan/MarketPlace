@@ -62,7 +62,8 @@ const syncContracts = async () => {
 
   for (let i = 0; i < files.length; i++) {
     let name = files[i];
-    let file = join(__dirname, "..", name + ".sol", name + ".json");
+    // let file = join(__dirname, "..", name + ".sol", name + ".json");
+    let file = join(__dirname, "..", name);
 
     if (!checkFile(file)) {
       return false;
