@@ -22,7 +22,7 @@ contract Airdrop1155Template is
 
     // activityId => ( userAddress => ( targetId => reward ) )user info
     mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
-        public rewards;
+        internal rewards;
 
     // index of activity 
     // The activity that creates the activity is to be used
@@ -113,25 +113,6 @@ contract Airdrop1155Template is
         IERC1155(asset).safeBatchTransferFrom(msg.sender,address(this),targetIds,amounts,'0x');
 
         id>0? index = id : index = currentId;
-    }
-
-    /**
-     * @dev public function to reduce user reward amount.
-     * @param id activity id
-     * @param user user address
-     * @param targetId it should be 0 in this contract
-     * @param amount reduce amount
-     */
-    function removeUserRewards(
-        uint256 id,
-        address user,
-        uint256 targetId,
-        uint256 amount
-    ) public lock(id) onlyPartner {
-
-         _removeUserRewards(id, user, targetId, amount);
-
-        IERC1155(activities[id].target).safeTransferFrom(address(this),msg.sender,targetId,amount,'0x');
     }
 
     /**
@@ -286,4 +267,11 @@ contract Airdrop1155Template is
 
         emit RemoveUserRewards(id, user,targetId,amount);
     }
+
+
+    function getUserRewards(uint id, address user,uint targetId)external view returns(uint _tokenIds){
+        activities[id].isDestroy == true?  _tokenIds = _tokenIds : _tokenIds = rewards[id][user][targetId];
+    }
+
+
 }

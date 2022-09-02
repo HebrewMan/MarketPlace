@@ -45,18 +45,6 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
     }
 
     /**
-     * @dev public function to reduce user reward amount.
-     * @param id activity id
-     * @param user user address
-     * @param targetId it should be 0 in this contract
-     * @param amount reduce amount
-     */
-    function removeUserRewards(uint256 id, address user, uint256 targetId, uint256 amount) public lock(id) {
-        _removeUserRewards(id, user, targetId,amount);
-        IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,targetId,'0x');
-    }
-
-    /**
      * @dev do the same thing as 'removeUserRewards' function. but it is a batch operation.
      */
     function removeUsersRewards(

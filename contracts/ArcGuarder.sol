@@ -5,8 +5,8 @@ import "./interfaces/IArcGovernance.sol";
 
 contract ArcGuarder {
 
-    //address _governance;
-    address internal _governance = address(0x182Bf190C46D0095aE0567E57156AdB05d182474);
+    //address governance;
+    address public governance = address(0x182Bf190C46D0095aE0567E57156AdB05d182474);
 
     /**
      * @dev State of pause
@@ -18,7 +18,7 @@ contract ArcGuarder {
      */
     modifier onlyRole(uint roleId) {
         require(
-            IArcGovernance(_governance).getRoleAddress(roleId) == msg.sender,
+            IArcGovernance(governance).getRoleAddress(roleId) == msg.sender,
             "ARC:Denied"
         );
         _;
@@ -71,12 +71,7 @@ contract ArcGuarder {
      */
     function _setGovernance(address addr) internal {
         require(addr != address(0), "ARC:ADDR0");
-        _governance = addr;
+        governance = addr;
     }
-
-    function governance() public view returns (address) {
-        return _governance;
-    }
-
    
 }
