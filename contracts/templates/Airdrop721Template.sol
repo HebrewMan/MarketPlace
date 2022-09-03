@@ -8,9 +8,9 @@ import "./AirdropBase.sol";
 
 contract Airdrop721Template is ERC721Holder, AirdropBase{
 
-    mapping(uint => mapping(address => uint[])) internal rewards;
+    mapping(uint => mapping(address => uint[])) userTokenIds;
 
-    uint[] internal tokenIds;
+    uint[] tokenIds;
 
     /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.
@@ -32,7 +32,7 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
         for (uint256 i = 0; i < users.length; i++) {
             require(IERC721(asset).ownerOf(targetIds[i]) == msg.sender , "ARC: NOT_OWNER");
             require(amounts[i] == 1,"ARC: NOT_1");
-            rewards[_id][users[i]].push(targetIds[i]);
+            userTokenIds[_id][users[i]].push(targetIds[i]);
             activities[_id].totalAmounts += 1;
             tokenIds.push(targetIds[i]);
 
@@ -78,7 +78,8 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
         whenNotPaused
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
-
+        require(!activities[id].status,"ARC:STATUS_ERROR");
+        
         IERC721 NFT = IERC721(activities[id].target);
 
         for(uint i; i< tokenIds.length; i++){
@@ -91,12 +92,12 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
         activities[id].isDestroy = true;
     }
 
-    /**
+    /*
      * @dev withdraw the rewards by users.
      * @param id activity id
      * @param targetId it should be 0 in this contract.
      */
-    function withdrawRewards(uint256 id, uint256 targetId)
+    function withdrawRewards(uint256 id,uint targetId)
         external
         lock(id)
         noPaused(id)
@@ -105,7 +106,7 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
 
         require(id > 0 && id <= currentId, "ARC:ERR_ID");
 
-        uint[] storage _rewards = rewards[id][msg.sender];
+        uint[] storage _rewards = userTokenIds[id][msg.sender];
         require(_rewards.length > 0, "ARC:NO_REWARD");
 
         for(uint i; i< _rewards.length;i++){
@@ -122,7 +123,7 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
             emit WithdrawRewards(id, msg.sender, _rewards[i], _rewards.length);
         }
        
-        delete rewards[id][msg.sender];
+        delete userTokenIds[id][msg.sender];
 
     }
 
@@ -183,7 +184,7 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
             }
         }
 
-        uint[] storage _rewards = rewards[id][user];
+        uint[] storage _rewards = userTokenIds[id][user];
 
         for(uint i; i< _rewards.length; i++){
             if(targetId == _rewards[i]){
@@ -196,7 +197,7 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
     }
 
     function _checkUserRewards(uint id,address user,uint targetId) private view returns(bool isExsit){
-        uint[] memory _rewards = rewards[id][user];
+        uint[] memory _rewards = userTokenIds[id][user];
 
         for(uint i; i< _rewards.length; i++){
             if(targetId == _rewards[i]){
@@ -205,8 +206,9 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
         }
     }
 
-    function getUserRewards(uint id, address user)external view returns(uint[] memory _tokenIds){
-        activities[id].isDestroy == true?  _tokenIds = _tokenIds : _tokenIds = rewards[id][user];
+    function getUserRewards(uint id, address user)external view returns(uint[] memory _targetIds,uint[] memory _amounts){
+        activities[id].isDestroy == true?  _targetIds = _targetIds : _targetIds = userTokenIds[id][user];
+        _amounts = _amounts;
     }
 
 }

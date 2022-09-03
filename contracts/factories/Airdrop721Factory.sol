@@ -13,7 +13,6 @@ contract Airdrop721Factory is IAirdropFactory,ArcGuarder{
     uint public length;
 
     function createAirdropContract() external whenNotPaused returns (address) {
-        
         bytes memory codeBytes = type(Airdrop721Template).creationCode;
         address instance = Clones.cloneByBytes(codeBytes);
         Airdrop721Template(instance).init(msg.sender);

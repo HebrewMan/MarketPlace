@@ -5,11 +5,7 @@ import "../libraries/transferHelper.sol";
 import "../ArcTokenGuarder.sol";
 
 import "./AirdropBase.sol";
-contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
-
-    // activityId => ( userAddress => ( targetId => reward ) )
-    mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
-        public rewards;
+abstract contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
 
     /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.
@@ -234,4 +230,10 @@ contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
 
         emit RemoveUserRewards(id, user, amount);
     }
+
+    function getUserRewards(uint id, address user,uint targetId)external view returns(uint[] memory _tokenIds){
+       
+    }
+
+
 }

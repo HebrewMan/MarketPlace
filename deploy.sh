@@ -30,10 +30,10 @@ network=${accept_network[${mode}]}
 
 if [[ -n "${network}" ]]; then
     echo "Deploying contract to network: ${network}"
-    npx hardhat run scripts/deploy.js --network "${network}"
+    npx hardhat run scripts/deploy.ts --network "${network}"
 else
     echo "Deploying contract to network: localhost"
-    npx hardhat run scripts/deploy.js
+    npx hardhat run scripts/deploy.ts
 fi
 
 echo ''

@@ -1,5 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+
+struct Activity {
+    address target;
+    uint256 totalAmounts;
+    uint256 totalRewardeds;
+    bool status;
+    bool isDestroy;
+    bool unlocked;
+}
     
 interface IAirdrop {
 
@@ -8,9 +17,11 @@ interface IAirdrop {
 
     function destroyActivity(uint256 id) external;
 
-    function withdrawRewards(uint256 id, uint256 targetId) external;
+    function withdrawRewards(uint256 id,uint targetId) external;
     function openActivity(uint256 id) external;
     function closeActivity(uint256 id) external;
+
+    function getUserRewards(uint id, address user)external view returns(uint[] memory _targetIds,uint[] memory _amounts);
 
     event AddActivity(uint256 indexed id, address indexed target);
     event AddUserRewards(uint256 indexed id, address indexed user, uint256 amount);

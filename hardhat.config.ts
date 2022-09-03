@@ -1,15 +1,11 @@
-// require('@nomiclabs/hardhat-waffle');
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
 import { join } from 'path';
-
 import dotenv from 'dotenv';
 const file = join("~", ".env-secret");
 
-const envConfig = dotenv.config({
-  path: file
-}).parsed;
+const envConfig = dotenv.config({path: file}).parsed;
 
 if (!envConfig) {
   console.error(`open ${file} fail`);
@@ -23,7 +19,6 @@ if (!privateKey) {
   process.exit(1);
 }
 
-
 const config: HardhatUserConfig = {
     solidity: {
       compilers: [
@@ -35,7 +30,7 @@ const config: HardhatUserConfig = {
         },
         {
           version: "0.5.13"
-      },
+        },
       ],
       settings: {
         optimizer: {
@@ -53,7 +48,7 @@ const config: HardhatUserConfig = {
           url: `https://data-seed-prebsc-1.arcdex.io:8575`, //<---- YOUR INFURA ID! (or it won't work)
           accounts: [`${privateKey}`],
         },
-      },
+      }
     // etherscan: {
     //   apiKey: process.env.ETHERSCAN_API_KEY,
     // },

@@ -2,12 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "../ArcInit.sol";
-import "../templates/ActivityStruct.sol";
 import "../interfaces/IAirdrop.sol";
 import "../ArcPartner.sol";
 import "../ArcGuarder.sol";
 
 abstract contract AirdropBase is ArcInit,ArcPartner,ArcGuarder,IAirdrop{
+
+      // activityId => ( userAddress => ( targetId => reward ) )
+    mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
+        public rewards;
 
     mapping(uint256 => Activity) public activities;
 
@@ -18,7 +21,7 @@ abstract contract AirdropBase is ArcInit,ArcPartner,ArcGuarder,IAirdrop{
      * @dev Modifier to allow actions only when the activity is not paused
      */
     modifier noPaused(uint256 id) {
-        require(id > 0, "ARC:ERRID");
+        require(id > 0 && id <= currentId, "ARC:ERRID");
         require(activities[id].status, "ARC:ACTIV_PAUSED");
         _;
     }
@@ -28,15 +31,10 @@ abstract contract AirdropBase is ArcInit,ArcPartner,ArcGuarder,IAirdrop{
      */
     modifier noDestroy(uint256 id) {
         if (id > 0) {
-            require(!activities[id].isDestroy && activities[id].status, "ARC:DESTROYED");
+            require(!activities[id].isDestroy, "ARC:DESTROYED");
         }
         _;
     }
-
-    // modifier isNormal(uint256 id){
-    //     require(!activities[id].isDestroy && activities[id].status, "ARC:DESTROYED");
-    //     _;
-    // }
 
     modifier lock(uint256 id) {
         if (id > 0) {

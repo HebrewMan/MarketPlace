@@ -4,115 +4,60 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
-import "../interfaces/IAirdrop.sol";
-import "../ArcPartner.sol";
-import "../ArcInit.sol";
+import "./AirdropBase.sol";
 
-contract Airdrop1155Template is
-    IAirdrop, 
-    ArcPartner,
-    ArcInit
-{
+contract Airdrop1155Template is AirdropBase, ERC1155Holder{
 
-    // activityId => Activity info
-    mapping(uint256 => Activity_) public activities;
-
-    //activityId => targetId => partnar info
-    mapping(uint => mapping(uint => TotalData)) public targetIdAmounts;
-
-    // activityId => ( userAddress => ( targetId => reward ) )user info
-    mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
-        internal rewards;
-
-    // index of activity 
-    // The activity that creates the activity is to be used
-    uint256 public currentId;
-
-    struct TotalData{
-        uint256 totalAmounts;
-        uint256 totalRewardeds;
-    }
-
-    struct Activity_ {
-        address target;
-        bool status;
-        bool isDestroy;
-        bool unlocked;
-        uint[] targetIds;
-        uint[] amounts;
-    }
-
-
-    /**
-     * @dev Modifier to allow actions only when the activity is paused
-     */
-    modifier IsPaused(uint256 id) {
-        require(id > 0, "ARC:ERRID");
-        require(!activities[id].status, "ARC:ACTIV_PAUSED");
-        _;
-    }
-
-    /**
-     * @dev Modifier to allow actions only when the activity is not paused
-     */
-    modifier noPaused(uint256 id) {
-        require(id > 0, "ARC:ERRID");
-        require(activities[id].status, "ARC:ACTIV_PAUSED");
-        _;
-    }
-
-    /**
-     * @dev Modifier to allow actions only when the activity is not destroy
-     */
-    modifier noDestroy(uint256 id) {
-        if (id > 0) {
-            require(!activities[id].isDestroy, "ARC:DESTROYED");
-        }
-        _;
-    }
-
-    modifier lock(uint256 id) {
-        if (id > 0) {
-            require(activities[id].unlocked, "ARC:LOCKED");
-            activities[id].unlocked = false;
-            _;
-            activities[id].unlocked = true;
-        } else {
-            _;
-        }
-    }
-
-    /**
-     * @dev Initialize
-     * @param partner address of partner, like owner
-     */
-    function init(address partner) public isInit {
-        _setPartner(partner);
-    }
+    mapping(uint =>mapping(address => uint[])) userTargetIds;//by user rewards or address(this) destroy;
+    mapping(uint =>mapping(address => uint[])) userAmounts;//by user rewards or address(this) destroy;
 
     /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.
      */
+
+     //delete lock
     function addUsersRewards(
         uint256 id,
         address asset,
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public lock(id) onlyPartner returns (uint256 index) {
+    ) external onlyPartner returns (uint256) {
         require(
             users.length > 0 && targetIds.length == users.length && amounts.length == users.length,
-            "ARC:Array length is error"
+            "ARC:LENGTH_ERROR"
         );
 
+        uint _id = _addUserRewards(id,asset);
+
+        uint[] storage _valutTargetIds = userTargetIds[_id][address(this)];
+
         for (uint256 i = 0; i < users.length; i++) {
-            require(amounts[i] > 0, "ARC: Amounts[i] must be greater than 0 ");
-            _addUserRewards(id,asset,users[i],targetIds[i],amounts[i]);
+
+            uint[] storage _userTargetIds = userTargetIds[_id][users[i]];
+            uint[] storage _userAmounts = userAmounts[_id][users[i]];
+
+            //add user assets data
+            if(_checkUserRewards(targetIds[i],_userTargetIds)){
+                for(uint j;j<_userTargetIds.length;j++){
+                    if(targetIds[i] == _userTargetIds[j]){
+                        _userAmounts[j] += amounts[i];
+                    }
+                }
+            }else{
+                userTargetIds[_id][users[i]].push(targetIds[i]);
+                userAmounts[_id][users[i]].push(amounts[i]);
+            }
+
+            //add valut assets data
+            if(!_checkUserRewards(targetIds[i],_valutTargetIds)){
+                _valutTargetIds.push(targetIds[i]);
+            }
+
         }
 
         IERC1155(asset).safeBatchTransferFrom(msg.sender,address(this),targetIds,amounts,'0x');
-
-        id>0? index = id : index = currentId;
+        return _id;
     }
 
     /**
@@ -123,17 +68,32 @@ contract Airdrop1155Template is
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public lock(id) onlyPartner {
+    ) external onlyPartner noDestroy(id) whenNotPaused{
         require( targetIds.length == users.length && amounts.length == users.length,
             "ARC:ERR_PARAMS"
         );
+        require(id > 0 && id <= currentId,"ARC:ERR_PARAMS");
 
-        for (uint256 i = 0; i < users.length; i++) {
-            _removeUserRewards(id,users[i],targetIds[i],amounts[i]);
+        for (uint i; i < users.length; i++) {
+            uint[] memory _userTargetIds = userTargetIds[id][users[i]];
+
+            //delte users assets data;
+            for(uint k; k < targetIds.length;k++){
+                if(!_checkUserRewards(targetIds[i], _userTargetIds)){
+                    revert("ARC: NOT_EXSITED");
+                }
+
+                if(targetIds[i] == _userTargetIds[k]){
+                    require(amounts[i]>0 && amounts[i]<=userAmounts[id][users[i]][k],"ARC:AMOUNT_ERROR");
+                    userAmounts[id][users[i]][k] -= amounts[i];
+                }
+            }
+
+            // activities[id].totalAmounts -= amounts[i];
+            emit RemoveUserRewards(id, users[i],targetIds[i],amounts[i]);
         }
 
-        IERC1155(activities[id].target).safeBatchTransferFrom(address(this),msg.sender,targetIds,amounts,'0x');
-            
+        IERC1155(activities[id].target).safeBatchTransferFrom(address(this),msg.sender,targetIds,amounts,'0x');  
     }
 
     /**
@@ -143,26 +103,22 @@ contract Airdrop1155Template is
      * 2. transfer remain amount of this activity to partner
      */
     function destroyActivity(uint256 id)
-        public
+        external
         onlyPartner
-        lock(id)
+        whenNotPaused
         noDestroy(id)
-        IsPaused(id)
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
 
         address _target = activities[id].target;
+        uint[] memory _valutTargetIds = userTargetIds[id][address(this)];
 
-        IERC1155(_target).safeBatchTransferFrom(msg.sender,address(this),activities[id].targetIds,activities[id].amounts,'0x');
-
-        for(uint i;i<activities[id].targetIds.length;i++){
-            delete targetIdAmounts[id][activities[id].targetIds[i]];
+        for(uint i;i<_valutTargetIds.length;i++){
+            uint _balanceOf = IERC1155(_target).balanceOf(address(this),_valutTargetIds[i]);
+            IERC1155(_target).safeTransferFrom(address(this), msg.sender,_valutTargetIds[i], _balanceOf, "0x");
         }
-
-        delete activities[id];
         
         activities[id].isDestroy = true;
-
     }
 
     /**
@@ -171,107 +127,51 @@ contract Airdrop1155Template is
      * @param targetId it should be 0 in this contract.
      */
     function withdrawRewards(uint256 id, uint256 targetId)
-        public
-        lock(id)
+        external 
         noPaused(id)
+        whenNotPaused
     {
-        require(id > 0 && id <= currentId, "ARC:ERRID");
-        require(activities[id].status, "ARC:STOPED");
 
-        uint256 _reward = rewards[id][msg.sender][targetId];
+        uint[] memory _userTargetIds = userTargetIds[id][msg.sender];
+        uint[] memory _userAmounts = userAmounts[id][msg.sender];
 
-        require(_reward > 0, "ARC:NO_REWARD");
+        IERC1155(activities[id].target).safeBatchTransferFrom(address(this),msg.sender,_userTargetIds,_userAmounts,'0x');
 
-        IERC1155(activities[id].target).safeTransferFrom(address(this),msg.sender,targetId,_reward,'0x');
+        delete userTargetIds[id][msg.sender];
+        delete userAmounts[id][msg.sender];
 
-        rewards[id][msg.sender][targetId] = 0;
-
-        targetIdAmounts[id][targetId].totalRewardeds += _reward;
-
-        emit WithdrawRewards(id, msg.sender, targetId, _reward);
+        // emit WithdrawRewards(id, msg.sender, targetId, _reward);
     }
 
-    function openActivity(uint256 id) public onlyPartner noDestroy(id) {
-        require(id > 0 && id <= currentId, "ARC:ERRID");
-        activities[id].status = true;
-
-        emit SetStatus(id, true);
-    }
-
-    function closeActivity(uint256 id)
-        public
-        onlyPartner
-        lock(id)
-        noDestroy(id)
-    {
-        require(id > 0 && id <= currentId, "ARC:ERRID");
-        activities[id].status = false;
-
-        emit SetStatus(id, false);
-    }
 
     /*
      * @dev private function for adding user's reward rule. Cumulative reward! if the user reward is 0.
      * @param id activity Id. it should be 0 when it is first created
      * @param asset target token address
      */
-    function _addUserRewards(uint256 id, address asset,address user,
-        uint256 targetId,
-        uint256 amount)
-        private
-        noDestroy(id)
-    {
-        uint _id = id;
-
+    function _addUserRewards(uint256 id, address asset) private noDestroy(id) whenNotPaused returns(uint){
         if (id > 0) {
-            require(activities[id].target == asset, "ARC: Asset address is error");
+            require(activities[id].target == asset, "ARC: ASSET_ERROR");
         } else {
             currentId += 1;
-            _id = currentId;
             activities[currentId].target = asset;
             activities[currentId].unlocked = true;
             emit AddActivity(currentId,asset);
         }
-
-        rewards[_id][user][targetId] += amount;
-        targetIdAmounts[_id][targetId].totalAmounts += amount;
-
-        activities[_id].targetIds.push(targetId);
-        activities[_id].amounts.push(amount);
-
+        return currentId;
     }
 
-    /**
-     * @dev private function to reduce user reward amount. when the reward amount of a user is 0.
-
-     * @param id activity id
-     * @param user user address
-     * @param targetId it should be 0 in this contract.
-     * @param amount reduce amount
-     */
-    function _removeUserRewards(
-        uint256 id,
-        address user,
-        uint256 targetId,
-        uint256 amount
-    ) private noDestroy(id) {
-        require(
-            id > 0 && id <= currentId && user != address(0) && amount > 0,
-            "ARC:ERR_PARAMS"
-        );
-
-        require(rewards[id][user][targetId] >= amount,"ARC: AMOUNT_ERROR");
-
-        rewards[id][user][targetId] -= amount;
-        targetIdAmounts[id][targetId].totalAmounts -= amount;
-
-        emit RemoveUserRewards(id, user,targetId,amount);
+     function _checkUserRewards(uint element,uint[] memory arr) private pure returns(bool isExsit){
+        uint[] memory _arr = new uint[](arr.length);
+        for(uint i; i< _arr.length; i++){
+            if(element == _arr[i]){
+                isExsit = true;
+            }
+        }
     }
 
-
-    function getUserRewards(uint id, address user,uint targetId)external view returns(uint _tokenIds){
-        activities[id].isDestroy == true?  _tokenIds = _tokenIds : _tokenIds = rewards[id][user][targetId];
+    function getUserRewards(uint id, address user)external view returns(uint[] memory _targetIds,uint[] memory _amounts){
+        activities[id].isDestroy == true?  _targetIds = _targetIds : _targetIds = userTargetIds[id][user];
+        activities[id].isDestroy == true?  _amounts = _amounts : _amounts = userAmounts[id][user];
     }
-
-
 }
