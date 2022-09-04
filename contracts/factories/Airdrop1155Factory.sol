@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IAirdropFactory.sol";
 import "../libraries/Clones.sol";
-import "../templates/Airdrop1155Template.sol";
 import "../ArcGuarder.sol";
-
+import "../templates/Airdrop1155Template.sol";
 contract Airdrop1155Factory is IAirdropFactory, ArcGuarder {
 
     address[] public airdrops;

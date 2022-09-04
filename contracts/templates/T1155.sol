@@ -5,15 +5,17 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import "./AirdropBase.sol";
-contract Airdrop1155Template is AirdropBase, ERC1155Holder{
 
-    mapping(uint =>mapping(address => uint[])) claimTargetIds;//by user rewards or address(this) destroy;
-    mapping(uint =>mapping(address => uint[])) claimAmounts;//by user rewards or address(this) destroy;
+contract Airdrop1155Template is ERC1155Holder, AirdropBase{
+
+    mapping(uint =>mapping(address => uint[])) userTargetIds;//by user rewards or address(this) destroy;
+    mapping(uint =>mapping(address => uint[])) userAmounts;//by user rewards or address(this) destroy;
 
     /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.
      */
 
+     //delete lock
     function addUsersRewards(
         uint256 id,
         address asset,
@@ -28,39 +30,39 @@ contract Airdrop1155Template is AirdropBase, ERC1155Holder{
 
         uint _id = _addUserRewards(id,asset);
 
-        uint[] storage _valutTargetIds = claimTargetIds[_id][address(this)];
-        uint[] storage _valutAmounts = claimAmounts[_id][address(this)];
+        uint[] storage _valutTargetIds = userTargetIds[_id][address(this)];
 
         for (uint256 i = 0; i < users.length; i++) {
-            uint[] storage _userTargetIds = claimTargetIds[_id][users[i]];
-            uint[] storage _userAmounts = claimAmounts[_id][users[i]];
+
+            uint[] storage _userTargetIds = userTargetIds[_id][users[i]];
+            uint[] storage _userAmounts = userAmounts[_id][users[i]];
 
             //add user assets data
-            if(_checkIsExsit(targetIds[i],_userTargetIds)){
+            if(_checkUserRewards(targetIds[i],_userTargetIds)){
                 for(uint j;j<_userTargetIds.length;j++){
                     if(targetIds[i] == _userTargetIds[j]){
                         _userAmounts[j] += amounts[i];
                     }
                 }
             }else{
-                _userTargetIds.push(targetIds[i]);
-                _userAmounts.push(amounts[i]);
+                userTargetIds[_id][users[i]].push(targetIds[i]);
+                userAmounts[_id][users[i]].push(amounts[i]);
             }
 
-            // //add valut assets data
-            if(_checkIsExsit(targetIds[i],_valutTargetIds)){
-            
-                for(uint j;j<_valutTargetIds.length;j++){
-                    if(targetIds[i] == _valutTargetIds[j]){
-                        _valutAmounts[j] += amounts[i];
-
-                    } 
-                }
-            }else{
+            //add valut assets data
+            if(!_checkUserRewards(targetIds[i],_valutTargetIds)){
                 _valutTargetIds.push(targetIds[i]);
-                _valutAmounts.push(amounts[i]);
+                rewards[_id][address(this)][targetIds[i]] = amounts[i];
+            }else{
+                for(uint j;j<_userTargetIds.length;j++){
+                    if(targetIds[i] == _userTargetIds[j]){
+                        _userAmounts[j] += amounts[i];
+                    }
+                }
             }
+
         }
+
         IERC1155(asset).safeBatchTransferFrom(msg.sender,address(this),targetIds,amounts,'0x');
         return _id;
     }
@@ -79,31 +81,22 @@ contract Airdrop1155Template is AirdropBase, ERC1155Holder{
         );
         require(id > 0 && id <= currentId,"ARC:ERR_PARAMS");
 
-        uint[] storage _valutTargetIds = claimTargetIds[id][address(this)];
-        uint[] storage _valutAmounts = claimAmounts[id][address(this)];
-
         for (uint i; i < users.length; i++) {
-            uint[] memory _userTargetIds = claimTargetIds[id][users[i]];
+            uint[] memory _userTargetIds = userTargetIds[id][users[i]];
 
             //delte users assets data;
-            for(uint j; j < _userTargetIds.length;j++){
-                if(!_checkIsExsit(targetIds[i], _userTargetIds)){
+            for(uint k; k < targetIds.length;k++){
+                if(!_checkUserRewards(targetIds[i], _userTargetIds)){
                     revert("ARC: NOT_EXSITED");
                 }
 
-                if(targetIds[i] == _userTargetIds[j]){
-                    require(amounts[i]>0 && amounts[i]<=claimAmounts[id][users[i]][j],"ARC:AMOUNT_ERROR");
-                    claimAmounts[id][users[i]][j] -= amounts[i];
+                if(targetIds[i] == _userTargetIds[k]){
+                    require(amounts[i]>0 && amounts[i]<=userAmounts[id][users[i]][k],"ARC:AMOUNT_ERROR");
+                    userAmounts[id][users[i]][k] -= amounts[i];
                 }
             }
 
-            //delte valut assets data;
-            for(uint j; j < _valutTargetIds.length;j++){
-                if(targetIds[i] == _valutTargetIds[j]){
-                    _valutAmounts[j] -= amounts[i];
-                }
-            }
-
+            // activities[id].totalAmounts -= amounts[i];
             emit RemoveUserRewards(id, users[i],targetIds[i],amounts[i]);
         }
 
@@ -124,11 +117,14 @@ contract Airdrop1155Template is AirdropBase, ERC1155Holder{
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
 
-        uint[] memory _valutTargetIds = claimTargetIds[id][address(this)];
-        uint[] memory _valutAmounts = claimAmounts[id][address(this)];
+        address _target = activities[id].target;
+        uint[] memory _valutTargetIds = userTargetIds[id][address(this)];
 
-        IERC1155(activities[id].target).safeBatchTransferFrom(address(this),msg.sender,_valutTargetIds,_valutAmounts,'0x');
-
+        for(uint i;i<_valutTargetIds.length;i++){
+            uint _balanceOf = IERC1155(_target).balanceOf(address(this),_valutTargetIds[i]);
+            IERC1155(_target).safeTransferFrom(address(this), msg.sender,_valutTargetIds[i], _balanceOf, "0x");
+        }
+        
         activities[id].isDestroy = true;
     }
 
@@ -143,25 +139,14 @@ contract Airdrop1155Template is AirdropBase, ERC1155Holder{
         whenNotPaused
     {
 
-        uint[] memory _userTargetIds = claimTargetIds[id][msg.sender];
-        uint[] memory _userAmounts = claimAmounts[id][msg.sender];
-
-        uint[] storage _valutTargetIds = claimTargetIds[id][address(this)];
-        uint[] storage _valutAmounts = claimAmounts[id][address(this)];
+        uint[] memory _userTargetIds = userTargetIds[id][msg.sender];
+        uint[] memory _userAmounts = userAmounts[id][msg.sender];
 
         IERC1155(activities[id].target).safeBatchTransferFrom(address(this),msg.sender,_userTargetIds,_userAmounts,'0x');
 
-        delete claimTargetIds[id][msg.sender];
-        delete claimAmounts[id][msg.sender];
+        delete userTargetIds[id][msg.sender];
+        delete userAmounts[id][msg.sender];
 
-        //delte valut assets data;
-        for(uint i;i<_userTargetIds.length;i++){
-            for(uint j; j < _valutTargetIds.length;j++){
-                if(_userTargetIds[i] == _valutTargetIds[j]){
-                    _valutAmounts[j] -= _userAmounts[i];
-                }
-            }
-        }
         // emit WithdrawRewards(id, msg.sender, targetId, _reward);
     }
 
@@ -183,16 +168,17 @@ contract Airdrop1155Template is AirdropBase, ERC1155Holder{
         return currentId;
     }
 
-    function _checkIsExsit(uint element,uint[] memory arr) private pure returns(bool isExsit){
-        for(uint i; i< arr.length; i++){
-            if(element == arr[i]){
+     function _checkUserRewards(uint element,uint[] memory arr) private pure returns(bool isExsit){
+        uint[] memory _arr = new uint[](arr.length);
+        for(uint i; i< _arr.length; i++){
+            if(element == _arr[i]){
                 isExsit = true;
             }
         }
     }
 
     function getUserRewards(uint id, address user)external view returns(uint[] memory _targetIds,uint[] memory _amounts){
-        activities[id].isDestroy == true?  _targetIds = _targetIds : _targetIds = claimTargetIds[id][user];
-        activities[id].isDestroy == true?  _amounts = _amounts : _amounts = claimAmounts[id][user];
+        activities[id].isDestroy == true?  _targetIds = _targetIds : _targetIds = userTargetIds[id][user];
+        activities[id].isDestroy == true?  _amounts = _amounts : _amounts = userAmounts[id][user];
     }
 }
