@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "./AirdropBase.sol";
 
 contract Airdrop721Template is ERC721Holder, AirdropBase {
-    mapping(uint => mapping(address => uint[])) userTokenIds;
 
+    mapping(uint => mapping(address => uint[])) userTokenIds;
     mapping(uint => uint[]) tokenIds;
 
     /**
@@ -92,6 +92,7 @@ contract Airdrop721Template is ERC721Holder, AirdropBase {
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
         require(!activities[id].status, "ARC:STATUS_ERROR");
+        require(tokenIds[id].length>0,"ARC:NO_ASSETS");
 
         IERC721 NFT = IERC721(activities[id].target);
 

@@ -8,20 +8,19 @@ import { describe } from "mocha";
 
 describe("Airdrop1155", function () {
 
-    async function deployAirdrop721() {
-        const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-        const ONE_GWEI = 1_000_000_000;
+    let addr1;
+    let addr2;
+    let addr3;
 
-        const lockedAmount = ONE_GWEI;
-        const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+    async function deployAirdrop() {
 
         // Contracts are deployed using the first signer/account by default
-        const [owner, otherAccount] = await ethers.getSigners();
+        const [partner,addr1,addr2,addr3] = await ethers.getSigners();
 
-        const Lock = await ethers.getContractFactory("Lock");
-        const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+        const Airdrop = await ethers.getContractFactory("Airdrop1155Template");
+        const airdrop = await Airdrop.deploy();
 
-        return { lock, unlockTime, lockedAmount, owner, otherAccount };
+        return { partner, addr1, addr2,addr3};
     }
 
 
@@ -45,49 +44,31 @@ describe("Airdrop1155", function () {
          */
         describe("Validations", function () {
             it("Should revert with the right error if called too soon", async function () {
-                const { lock } = await loadFixture(deployAirdrop721);
+                // const { lock } = await loadFixture(deployAirdrop);
 
-                await expect(lock.withdraw()).to.be.revertedWith(
-                    "You can't withdraw yet"
-                );
+                // await expect(lock.withdraw()).to.be.revertedWith("You can't withdraw yet");
             });
             it("Should revert with the right error if called from another account", async function () {
-                const { lock, unlockTime, otherAccount } = await loadFixture(deployAirdrop721);
 
-                // We can increase the time in Hardhat Network
-                await time.increaseTo(unlockTime);
-
-                // We use lock.connect() to send a transaction from another account
-                await expect(lock.connect(otherAccount).withdraw()).to.be.revertedWith(
-                    "You aren't the owner"
-                );
             });
 
             it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
-                const { lock, unlockTime } = await loadFixture(
-                    deployAirdrop721
-                );
-
-                // Transactions are sent using the first signer by default
-                await time.increaseTo(unlockTime);
-
-                await expect(lock.withdraw()).not.to.be.reverted;
+           
+      
             });
         });
 
         describe("Withdraw Rewards", function () {
 
             it("Should transfer the funds to the owner", async function () {
-                const { lock, unlockTime, lockedAmount, owner } = await loadFixture(
-                    deployAirdrop721
-                );
+        
 
-                await time.increaseTo(unlockTime);
+                // await time.increaseTo(unlockTime);
 
-                await expect(lock.withdraw()).to.changeEtherBalances(
-                    [owner, lock],
-                    [lockedAmount, -lockedAmount]
-                );
+                // await expect(lock.withdraw()).to.changeEtherBalances(
+                //     [owner, lock],
+                //     [lockedAmount, -lockedAmount]
+                // );
             });
         });
 
@@ -117,11 +98,7 @@ describe("Airdrop1155", function () {
         describe("Activity Status", function () {
             describe("Open Activity", function () {
                 it("Only partner can do this", async function () {
-                    const { lock } = await loadFixture(deployAirdrop721);
-
-                    await expect(lock.withdraw()).to.be.revertedWith(
-                        "You can't withdraw yet"
-                    );
+                 
                 });
             });
 
@@ -130,11 +107,7 @@ describe("Airdrop1155", function () {
                 * 角色检查
                 */
                 it("Only partner can do this", async function () {
-                    const { lock } = await loadFixture(deployAirdrop721);
-
-                    await expect(lock.withdraw()).to.be.revertedWith(
-                        "You can't withdraw yet"
-                    );
+                
                 });
             });
         });

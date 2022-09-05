@@ -5,8 +5,7 @@ import "../libraries/transferHelper.sol";
 import "../ArcTokenGuarder.sol";
 
 import "./AirdropBase.sol";
-abstract contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
-
+contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
     /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.
      */
@@ -43,30 +42,6 @@ abstract contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
         );
 
         return _id;
-    }
-
-    /**
-     * @dev public function to reduce user reward amount.
-     * @param id activity id
-     * @param user user address
-     * @param targetId it should be 0 in this contract
-     * @param amount reduce amount
-     */
-    function removeUserRewards(
-        uint256 id,
-        address user,
-        uint256 targetId,
-        uint256 amount
-    ) public onlyPartner {
-        uint256 refundAmount = _removeUserRewards(id, user, targetId, amount);
-
-        if (refundAmount > 0) {
-            TransferHelper.safeTransfer(
-                activities[id].target,
-                msg.sender,
-                refundAmount
-            );
-        }
     }
 
     /**
@@ -229,8 +204,8 @@ abstract contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
         emit RemoveUserRewards(id, user, amount);
     }
 
-    function getUserRewards(uint id, address user,uint targetId)external view returns(uint[] memory _tokenIds){
-       
+    function getUserRewards(uint id, address user)external view returns(uint[] memory tokenIds,uint[] memory amounts){
+
     }
 
 
