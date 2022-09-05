@@ -19,8 +19,10 @@ contract MyToken1155 is ERC1155, Ownable, ERC1155Supply {
 
     constructor() ERC1155("https://www.github.io/practice-codes/one/{id}.json") {
         _mint(msg.sender, ERC721_0, 1, ""); 
-        _mint(msg.sender, ERC721_2, 10, ""); 
-        _mint(msg.sender, ERC20_3, 100000000, ""); 
+        _mint(msg.sender, ERC721_1, 1, ""); 
+        _mint(msg.sender, ERC721_2, 1, ""); 
+        _mint(msg.sender, ERC20_3, 1000000, ""); 
+        _mint(msg.sender, ERC20_4, 1000000, ""); 
     }
     
     

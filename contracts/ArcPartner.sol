@@ -6,7 +6,7 @@ contract ArcPartner {
 
     // Access modifier for partner-only functionality
     modifier onlyPartner() {
-        require(_partner == msg.sender, "ARC:Denied");
+        require(_partner == msg.sender, "ARC:DENIED");
         _;
     }
 
