@@ -6,11 +6,10 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 import "./AirdropBase.sol";
 
-contract Airdrop721Template is ERC721Holder, AirdropBase{
-
+contract Airdrop721Template is ERC721Holder, AirdropBase {
     mapping(uint => mapping(address => uint[])) userTokenIds;
 
-    uint[] tokenIds;
+    mapping(uint => uint[]) tokenIds;
 
     /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.
@@ -21,22 +20,32 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public lock(id) onlyPartner returns (uint256) {
+    ) public onlyPartner returns (uint256) {
         require(
-            users.length > 0 && targetIds.length == users.length && amounts.length == users.length,
+            users.length > 0 &&
+                targetIds.length == users.length &&
+                amounts.length == users.length,
             "ARC: LENGTH_ERROR"
         );
 
-        uint _id = _addUserRewards(id,asset);
+        uint _id = _addUserRewards(id, asset);
 
         for (uint256 i = 0; i < users.length; i++) {
-            require(IERC721(asset).ownerOf(targetIds[i]) == msg.sender , "ARC: NOT_OWNER");
-            require(amounts[i] == 1,"ARC: NOT_1");
+            require(
+                IERC721(asset).ownerOf(targetIds[i]) == msg.sender,
+                "ARC: NOT_OWNER"
+            );
+            require(amounts[i] == 1, "ARC: NOT_1");
             userTokenIds[_id][users[i]].push(targetIds[i]);
             activities[_id].totalAmounts += 1;
-            tokenIds.push(targetIds[i]);
+            tokenIds[_id].push(targetIds[i]);
 
-            IERC721(asset).safeTransferFrom(msg.sender,address(this),targetIds[i],'0x');
+            IERC721(asset).safeTransferFrom(
+                msg.sender,
+                address(this),
+                targetIds[i],
+                "0x"
+            );
 
             emit AddUserRewards(_id, users[i], targetIds[i]);
         }
@@ -52,16 +61,21 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    )  public lock(id) {
-        require( targetIds.length == users.length && amounts.length == users.length,
+    ) public {
+        require(
+            targetIds.length == users.length && amounts.length == users.length,
             "ARC:ERR_PARAMS"
         );
 
         for (uint256 i = 0; i < users.length; i++) {
-            _removeUserRewards(id,users[i],targetIds[i],amounts[i]);
-             IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,targetIds[i],'0x');
+            _removeUserRewards(id, users[i], targetIds[i], amounts[i]);
+            IERC721(activities[id].target).safeTransferFrom(
+                address(this),
+                msg.sender,
+                targetIds[i],
+                "0x"
+            );
         }
-            
     }
 
     /**
@@ -73,23 +87,22 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
     function destroyActivity(uint256 id)
         public
         onlyPartner
-        lock(id)
         noDestroy(id)
         whenNotPaused
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
-        require(!activities[id].status,"ARC:STATUS_ERROR");
-        
+        require(!activities[id].status, "ARC:STATUS_ERROR");
+
         IERC721 NFT = IERC721(activities[id].target);
 
-        for(uint i; i< tokenIds.length; i++){
-            NFT.safeTransferFrom(address(this), msg.sender, tokenIds[i]);
+        for (uint i; i < tokenIds[id].length; i++) {
+            NFT.safeTransferFrom(address(this), msg.sender, tokenIds[id][i]);
         }
 
-        delete activities[id];
-        delete tokenIds;
-
         activities[id].isDestroy = true;
+
+        delete tokenIds[id];
+
     }
 
     /*
@@ -97,34 +110,36 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
      * @param id activity id
      * @param targetId it should be 0 in this contract.
      */
-    function withdrawRewards(uint256 id,uint targetId)
+    function withdrawRewards(uint256 id, uint targetId)
         external
-        lock(id)
         noPaused(id)
         whenNotPaused
     {
-
         require(id > 0 && id <= currentId, "ARC:ERR_ID");
 
         uint[] storage _rewards = userTokenIds[id][msg.sender];
         require(_rewards.length > 0, "ARC:NO_REWARD");
 
-        for(uint i; i< _rewards.length;i++){
-            IERC721(activities[id].target).safeTransferFrom(address(this),msg.sender,_rewards[i],'0x');
+        for (uint i; i < _rewards.length; i++) {
+            IERC721(activities[id].target).safeTransferFrom(
+                address(this),
+                msg.sender,
+                _rewards[i],
+                "0x"
+            );
             activities[id].totalRewardeds += 1;
 
-            for(uint k; k< tokenIds.length;k++){
-                if(_rewards[i] == tokenIds[k]){
-                    tokenIds[k] = tokenIds[tokenIds.length-1];
-                    tokenIds.pop();
+            for (uint k; k < tokenIds[id].length; k++) {
+                if (_rewards[i] == tokenIds[id][k]) {
+                    tokenIds[id][k] = tokenIds[id][tokenIds[id].length - 1];
+                    tokenIds[id].pop();
                 }
             }
 
             emit WithdrawRewards(id, msg.sender, _rewards[i], _rewards.length);
         }
-       
-        delete userTokenIds[id][msg.sender];
 
+        delete userTokenIds[id][msg.sender];
     }
 
     /*
@@ -137,7 +152,7 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
         onlyPartner
         noDestroy(id)
         whenNotPaused
-        returns(uint)
+        returns (uint)
     {
         uint _id = id;
 
@@ -152,7 +167,6 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
         }
 
         return _id;
-
     }
 
     /*
@@ -168,47 +182,59 @@ contract Airdrop721Template is ERC721Holder, AirdropBase{
         address user,
         uint256 targetId,
         uint amount
-    ) private noDestroy(id) whenNotPaused onlyPartner{
-        require(amount == 1,"ARC: NOT_1");
-        require(_checkUserRewards(id,user,targetId),"ARC: USER_ERROR");
-        require(id > 0 && id <= currentId,"ARC:ERR_PARAMS");
+    ) private noDestroy(id) whenNotPaused onlyPartner {
+        require(amount == 1, "ARC: NOT_1");
+        require(_checkUserRewards(id, user, targetId), "ARC: USER_ERROR");
+        require(id > 0 && id <= currentId, "ARC:ERR_PARAMS");
 
-        require(IERC721(activities[id].target).ownerOf(targetId) == address(this),"ARC: AMOUNT_ERROR");
+        require(
+            IERC721(activities[id].target).ownerOf(targetId) == address(this),
+            "ARC: AMOUNT_ERROR"
+        );
 
         activities[id].totalAmounts -= amount;
 
-        for(uint i; i< tokenIds.length; i++){
-            if(targetId == tokenIds[i]){
-                tokenIds[i] = tokenIds[tokenIds.length-1];
-                tokenIds.pop();
+        for (uint i; i < tokenIds[id].length; i++) {
+            if (targetId == tokenIds[id][i]) {
+                tokenIds[id][i] = tokenIds[id][tokenIds[id].length - 1];
+                tokenIds[id].pop();
             }
         }
 
         uint[] storage _rewards = userTokenIds[id][user];
 
-        for(uint i; i< _rewards.length; i++){
-            if(targetId == _rewards[i]){
-                _rewards[i] = _rewards[_rewards.length-1];
+        for (uint i; i < _rewards.length; i++) {
+            if (targetId == _rewards[i]) {
+                _rewards[i] = _rewards[_rewards.length - 1];
                 _rewards.pop();
             }
         }
 
-        emit RemoveUserRewards(id, user,targetId,1);
+        emit RemoveUserRewards(id, user, targetId, 1);
     }
 
-    function _checkUserRewards(uint id,address user,uint targetId) private view returns(bool isExsit){
+    function _checkUserRewards(
+        uint id,
+        address user,
+        uint targetId
+    ) private view returns (bool isExsit) {
         uint[] memory _rewards = userTokenIds[id][user];
 
-        for(uint i; i< _rewards.length; i++){
-            if(targetId == _rewards[i]){
+        for (uint i; i < _rewards.length; i++) {
+            if (targetId == _rewards[i]) {
                 isExsit = true;
             }
         }
     }
 
-    function getUserRewards(uint id, address user)external view returns(uint[] memory _targetIds,uint[] memory _amounts){
-        activities[id].isDestroy == true?  _targetIds = _targetIds : _targetIds = userTokenIds[id][user];
+    function getUserRewards(uint id, address user)
+        external
+        view
+        returns (uint[] memory _targetIds, uint[] memory _amounts)
+    {
+        activities[id].isDestroy == true
+            ? _targetIds = _targetIds
+            : _targetIds = userTokenIds[id][user];
         _amounts = _amounts;
     }
-
 }

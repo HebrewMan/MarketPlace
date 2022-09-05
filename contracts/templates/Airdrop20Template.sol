@@ -16,7 +16,7 @@ abstract contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public lock(id) onlyPartner returns (uint256) {
+    ) public onlyPartner returns (uint256) {
         require(users.length > 0 && targetIds.length == users.length && amounts.length == users.length,
             "ARC:Array length is error"
         );
@@ -57,7 +57,7 @@ abstract contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
         address user,
         uint256 targetId,
         uint256 amount
-    ) public lock(id) onlyPartner {
+    ) public onlyPartner {
         uint256 refundAmount = _removeUserRewards(id, user, targetId, amount);
 
         if (refundAmount > 0) {
@@ -77,7 +77,7 @@ abstract contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
         address[] memory users,
         uint256[] memory targetIds,
         uint256[] memory amounts
-    ) public lock(id) onlyPartner {
+    ) public onlyPartner {
         require(
             users.length > 0 &&
                 targetIds.length == users.length &&
@@ -115,7 +115,6 @@ abstract contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
     function destroyActivity(uint256 id)
         public
         onlyPartner
-        lock(id)
         whenNotPaused
         noDestroy(id)
     {
@@ -146,7 +145,6 @@ abstract contract Airdrop20Template is ArcTokenGuarder,AirdropBase{
      */
     function withdrawRewards(uint256 id, uint256 targetId)
         public
-        lock(id)
         noPaused(id)
         whenNotPaused
     {

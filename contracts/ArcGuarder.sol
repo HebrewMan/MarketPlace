@@ -6,7 +6,7 @@ import "./interfaces/IArcGovernance.sol";
 contract ArcGuarder {
 
     //address governance;
-    address public governance = address(0x182Bf190C46D0095aE0567E57156AdB05d182474);
+    address public governance = address(0x2c7F56B4b78355C5D898dafc8a39bcC7c6bE7EF3);
 
     /**
      * @dev State of pause

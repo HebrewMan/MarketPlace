@@ -36,17 +36,6 @@ abstract contract AirdropBase is ArcInit,ArcPartner,ArcGuarder,IAirdrop{
         _;
     }
 
-    modifier lock(uint256 id) {
-        if (id > 0) {
-            require(activities[id].unlocked, "ARC:LOCKED");
-            activities[id].unlocked = false;
-            _;
-            activities[id].unlocked = true;
-        } else {
-            _;
-        }
-    }
-
     /**
      * @dev Initialize
      * @param partner address of partner, like owner
@@ -64,7 +53,7 @@ abstract contract AirdropBase is ArcInit,ArcPartner,ArcGuarder,IAirdrop{
     }
 
 
-    function closeActivity(uint256 id) external onlyPartner lock(id) noDestroy(id)
+    function closeActivity(uint256 id) external onlyPartner noDestroy(id)
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
         activities[id].status = false;
