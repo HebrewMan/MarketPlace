@@ -83,12 +83,18 @@ contract Airdrop1155Template is AirdropBase, ERC1155Holder{
         uint[] storage _valutAmounts = claimAmounts[id][address(this)];
 
         for (uint i; i < users.length; i++) {
+
             uint[] memory _userTargetIds = claimTargetIds[id][users[i]];
 
             //delte users assets data;
+
+            if(_userTargetIds.length<=0){
+                revert("ARC:NO_REWARDS");
+            }
+
             for(uint j; j < _userTargetIds.length;j++){
                 if(!_checkIsExsit(targetIds[i], _userTargetIds)){
-                    revert("ARC: NOT_EXSITED");
+                    revert("ARC:NOT_EXSITED");
                 }
 
                 if(targetIds[i] == _userTargetIds[j]){

@@ -5,7 +5,7 @@ import { beforeEach, describe } from "mocha";
 
 describe("Airdrop1155", function () {
 
-    // beforeEach() //if you want deploy 2 contracts;
+    // beforeEach() //if you want deploy 2 contracts by loadFixture
 
     async function deployContracts() {
         const [owner,addr1,addr2,addr3] = await ethers.getSigners();
@@ -18,7 +18,7 @@ describe("Airdrop1155", function () {
 
         console.log("airdrop address 🏠:",airdrop.address);
         console.log("nft1155 address 🏠:",nft1155.address);
-        return {owner,addr1, addr2,addr3,airdrop,nft1155};
+        return { owner,addr1, addr2,addr3,airdrop,nft1155 };
 
     }
 
@@ -39,9 +39,7 @@ describe("Airdrop1155", function () {
 
         it("should be approved to airdrop1155 address", async function () {
             const { nft1155,airdrop,owner} = await loadFixture(deployContracts);
-
             await nft1155.setApprovalForAll(airdrop.address,true);
-
             expect(await nft1155.isApprovedForAll(owner.address,airdrop.address)).to.be.equal(true);
         });
     });
@@ -59,7 +57,7 @@ describe("Airdrop1155", function () {
             });
 
             it("Only Partner", async function () {
-                let { airdrop,addr1,addr2,nft1155,owner} = await loadFixture(deployContracts);
+                const { airdrop,addr1,addr2,nft1155,owner} = await loadFixture(deployContracts);
 
                 await nft1155.setApprovalForAll(airdrop.address,true);//approve
                 await airdrop.init(owner.address);//init
@@ -68,8 +66,7 @@ describe("Airdrop1155", function () {
                 const ids = [3,3];
                 const amounts = [100,100];
 
-                airdrop = airdrop.connect(addr1);
-                await expect(airdrop.addUsersRewards(0,nft1155.address,users,ids,amounts)).to.be.rejectedWith("ARC:DENIED");
+                await expect(airdrop.connect(addr1).addUsersRewards(0,nft1155.address,users,ids,amounts)).to.be.rejectedWith("ARC:DENIED");
             });
         });
 
@@ -189,6 +186,26 @@ describe("Airdrop1155", function () {
 
             })
 
+            it("Remove:Fail. If user don't have rewards",async ()=>{
+
+                let {airdrop,addr1,addr2,addr3,nft1155,owner} = await loadFixture(deployContracts);
+
+                await airdrop.init(owner.address);//init
+                await nft1155.setApprovalForAll(airdrop.address,true);//approve
+    
+                let users = [addr1.address,addr2.address];
+                const ids = [3,3];
+                let amounts = [200,200];
+    
+                await airdrop.addUsersRewards(0,nft1155.address,users,ids,amounts);
+    
+                amounts = [100,100];
+                users = [addr1.address,addr3.address];
+                //remove
+                await expect(airdrop.removeUsersRewards(1,users,ids,amounts)).to.be.rejectedWith("ARC:NO_REWARDS");
+
+            })
+
             it("Remove:fail only partner",async ()=>{
 
                 let {airdrop,addr1,addr2,nft1155,owner} = await loadFixture(deployContracts);
@@ -209,12 +226,7 @@ describe("Airdrop1155", function () {
         });
 
         describe("✨ withdraw Rewards",async function () {
-            /**
-            * 数量检查，可领取数量
-            * 是否到账
-            * 提取成功后 池子余额 、用户余额变化
-            */
-
+   
             it("Active status must be true",async()=>{
 
                 let {airdrop,addr1,addr2,nft1155,owner} = await loadFixture(deployContracts);
@@ -250,6 +262,12 @@ describe("Airdrop1155", function () {
                 await airdrop.openActivity(1);
 
                 airdrop = airdrop.connect(addr1);
+
+                //check user can claim amounts
+
+                expect((await(airdrop.getUserRewards(1,addr1.address)))[1][0]).to.be.equal(300);
+                expect((await(airdrop.getUserRewards(1,addr1.address)))[1][1]).to.be.equal(400);
+
                 await airdrop.withdrawRewards(1,1);
 
                 expect((await nft1155.balanceOf(addr1.address,3)).toNumber()).to.be.equal(300);
@@ -331,7 +349,7 @@ describe("Airdrop1155", function () {
 
         });
 
-        describe("Activity Status", function () {
+        describe("✨ Activity Status", function () {
             it("Open and close activity status", async function () {
                 let {airdrop,addr1,addr2,owner,nft1155} = await loadFixture(deployContracts);
 

@@ -8,8 +8,8 @@ import "./AirdropBase.sol";
 
 contract Airdrop721Template is ERC721Holder, AirdropBase {
 
-    mapping(uint => mapping(address => uint[])) userTokenIds;
-    mapping(uint => uint[]) tokenIds;
+    mapping(uint => mapping(address => uint[])) claimTargetIds;
+    // mapping(uint => uint[]) tokenIds;
 
     /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.
@@ -25,7 +25,7 @@ contract Airdrop721Template is ERC721Holder, AirdropBase {
             users.length > 0 &&
                 targetIds.length == users.length &&
                 amounts.length == users.length,
-            "ARC: LENGTH_ERROR"
+            "ARC:LENGTH_ERROR"
         );
 
         uint _id = _addUserRewards(id, asset);
@@ -33,12 +33,12 @@ contract Airdrop721Template is ERC721Holder, AirdropBase {
         for (uint256 i = 0; i < users.length; i++) {
             require(
                 IERC721(asset).ownerOf(targetIds[i]) == msg.sender,
-                "ARC: NOT_OWNER"
+                "ARC:NOT_OWNER"
             );
             require(amounts[i] == 1, "ARC: NOT_1");
-            userTokenIds[_id][users[i]].push(targetIds[i]);
+            claimTargetIds[_id][users[i]].push(targetIds[i]);
             activities[_id].totalAmounts += 1;
-            tokenIds[_id].push(targetIds[i]);
+            claimTargetIds[_id][address(this)].push(targetIds[i]);
 
             IERC721(asset).safeTransferFrom(
                 msg.sender,
@@ -92,17 +92,19 @@ contract Airdrop721Template is ERC721Holder, AirdropBase {
     {
         require(id > 0 && id <= currentId, "ARC:ERRID");
         require(!activities[id].status, "ARC:STATUS_ERROR");
-        require(tokenIds[id].length>0,"ARC:NO_ASSETS");
+
+        uint[] storage _valutTargetIds = claimTargetIds[id][address(this)];
+        require(_valutTargetIds.length>0,"ARC:NO_ASSETS");
 
         IERC721 NFT = IERC721(activities[id].target);
 
-        for (uint i; i < tokenIds[id].length; i++) {
-            NFT.safeTransferFrom(address(this), msg.sender, tokenIds[id][i]);
+        for (uint i; i < _valutTargetIds.length; i++) {
+            NFT.safeTransferFrom(address(this), msg.sender, _valutTargetIds[i]);
         }
 
         activities[id].isDestroy = true;
 
-        delete tokenIds[id];
+        delete claimTargetIds[id][address(this)];
 
     }
 
@@ -118,29 +120,30 @@ contract Airdrop721Template is ERC721Holder, AirdropBase {
     {
         require(id > 0 && id <= currentId, "ARC:ERR_ID");
 
-        uint[] storage _rewards = userTokenIds[id][msg.sender];
-        require(_rewards.length > 0, "ARC:NO_REWARD");
+        uint[] storage _userTargetIds = claimTargetIds[id][msg.sender];
+        uint[] storage _valutTargetIds = claimTargetIds[id][address(this)];
+        require(_userTargetIds.length > 0, "ARC:NO_REWARD");
 
-        for (uint i; i < _rewards.length; i++) {
+        for (uint i; i < _userTargetIds.length; i++) {
             IERC721(activities[id].target).safeTransferFrom(
                 address(this),
                 msg.sender,
-                _rewards[i],
+                _userTargetIds[i],
                 "0x"
             );
             activities[id].totalRewardeds += 1;
 
-            for (uint k; k < tokenIds[id].length; k++) {
-                if (_rewards[i] == tokenIds[id][k]) {
-                    tokenIds[id][k] = tokenIds[id][tokenIds[id].length - 1];
-                    tokenIds[id].pop();
+            for (uint k; k < _valutTargetIds.length; k++) {
+                if (_userTargetIds[i] == _valutTargetIds[k]) {
+                    _valutTargetIds[k] = _valutTargetIds[_valutTargetIds.length - 1];
+                    _valutTargetIds.pop();
                 }
             }
 
-            emit WithdrawRewards(id, msg.sender, _rewards[i], _rewards.length);
+            emit WithdrawRewards(id, msg.sender, _userTargetIds[i], _userTargetIds.length);
         }
 
-        delete userTokenIds[id][msg.sender];
+        delete claimTargetIds[id][msg.sender];
     }
 
     /*
@@ -195,19 +198,20 @@ contract Airdrop721Template is ERC721Holder, AirdropBase {
 
         activities[id].totalAmounts -= amount;
 
-        for (uint i; i < tokenIds[id].length; i++) {
-            if (targetId == tokenIds[id][i]) {
-                tokenIds[id][i] = tokenIds[id][tokenIds[id].length - 1];
-                tokenIds[id].pop();
+        uint[] storage _userTargetIds = claimTargetIds[id][user];
+        uint[] storage _valutTargetIds = claimTargetIds[id][address(this)];
+
+        for (uint i; i < _valutTargetIds.length; i++) {
+            if (targetId == _valutTargetIds[i]) {
+                _valutTargetIds[i] = _valutTargetIds[_valutTargetIds.length - 1];
+                _valutTargetIds.pop();
             }
         }
 
-        uint[] storage _rewards = userTokenIds[id][user];
-
-        for (uint i; i < _rewards.length; i++) {
-            if (targetId == _rewards[i]) {
-                _rewards[i] = _rewards[_rewards.length - 1];
-                _rewards.pop();
+        for (uint i; i < _userTargetIds.length; i++) {
+            if (targetId == _userTargetIds[i]) {
+                _userTargetIds[i] = _userTargetIds[_userTargetIds.length - 1];
+                _userTargetIds.pop();
             }
         }
 
@@ -219,10 +223,10 @@ contract Airdrop721Template is ERC721Holder, AirdropBase {
         address user,
         uint targetId
     ) private view returns (bool isExsit) {
-        uint[] memory _rewards = userTokenIds[id][user];
 
-        for (uint i; i < _rewards.length; i++) {
-            if (targetId == _rewards[i]) {
+        uint[] memory _userTargetIds = claimTargetIds[id][user];
+        for (uint i; i < _userTargetIds.length; i++) {
+            if (targetId == _userTargetIds[i]) {
                 isExsit = true;
             }
         }
@@ -235,7 +239,7 @@ contract Airdrop721Template is ERC721Holder, AirdropBase {
     {
         activities[id].isDestroy == true
             ? _targetIds = _targetIds
-            : _targetIds = userTokenIds[id][user];
+            : _targetIds = claimTargetIds[id][user];
         _amounts = _amounts;
     }
 }

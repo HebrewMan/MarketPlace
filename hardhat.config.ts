@@ -3,8 +3,8 @@ import "@nomicfoundation/hardhat-toolbox";
 
 import { join } from 'path';
 import dotenv from 'dotenv';
-const file = join("~", ".env-secret");
 
+const file = join("~", ".env-secret");
 const envConfig = dotenv.config({path: file}).parsed;
 
 if (!envConfig) {
@@ -27,9 +27,6 @@ const config: HardhatUserConfig = {
         },
         {
             version: "0.8.9"
-        },
-        {
-          version: "0.6.0"
         },
         {
           version: "0.5.13"
