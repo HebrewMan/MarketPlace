@@ -53,7 +53,6 @@ contract Airdrop1155Template is AirdropBase, ERC1155Holder{
                 for(uint j;j<_valutTargetIds.length;j++){
                     if(targetIds[i] == _valutTargetIds[j]){
                         _valutAmounts[j] += amounts[i];
-
                     } 
                 }
             }else{

@@ -9,8 +9,6 @@ import "./AirdropBase.sol";
 contract Airdrop721Template is ERC721Holder, AirdropBase {
 
     mapping(uint => mapping(address => uint[])) claimTargetIds;
-    // mapping(uint => uint[]) tokenIds;
-
     /**
      * @dev do the same thing as 'addUserRewards' function. but it is a batch operation.
      */
