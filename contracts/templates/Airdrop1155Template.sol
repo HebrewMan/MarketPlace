@@ -166,8 +166,8 @@ contract Airdrop1155Template is AirdropBase, ERC1155Holder{
                     _valutAmounts[j] -= _userAmounts[i];
                 }
             }
+            emit WithdrawRewards(id, msg.sender, _userTargetIds[i], _userAmounts[i]);
         }
-        // emit WithdrawRewards(id, msg.sender, targetId, _reward);
     }
 
 
