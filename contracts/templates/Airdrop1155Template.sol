@@ -156,9 +156,6 @@ contract Airdrop1155Template is AirdropBase, ERC1155Holder{
 
         IERC1155(activities[id].target).safeBatchTransferFrom(address(this),msg.sender,_userTargetIds,_userAmounts,'0x');
 
-        delete claimTargetIds[id][msg.sender];
-        delete claimAmounts[id][msg.sender];
-
         //delte valut assets data;
         for(uint i;i<_userTargetIds.length;i++){
             for(uint j; j < _valutTargetIds.length;j++){
@@ -166,8 +163,11 @@ contract Airdrop1155Template is AirdropBase, ERC1155Holder{
                     _valutAmounts[j] -= _userAmounts[i];
                 }
             }
+            emit WithdrawRewards(id, msg.sender, _userTargetIds[i], _userAmounts[i]);
         }
-        // emit WithdrawRewards(id, msg.sender, targetId, _reward);
+
+        delete claimTargetIds[id][msg.sender];
+        delete claimAmounts[id][msg.sender];
     }
 
 
