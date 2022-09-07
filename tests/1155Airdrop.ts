@@ -306,7 +306,10 @@ describe("Airdrop1155", function () {
                 //user claimed;
                 expect((await(airdrop.getUserRewards(1,airdrop.address)))[1][0]).to.be.equal(300);
                 expect((await(airdrop.getUserRewards(1,airdrop.address)))[1][1]).to.be.equal(400);
-  
+
+                expect((await(airdrop.getUserRewards(1,addr1.address)))[1][0]).to.be.equal(undefined);
+                expect((await(airdrop.getUserRewards(1,addr1.address)))[1][1]).to.be.equal(undefined);
+
             });
         });
 
