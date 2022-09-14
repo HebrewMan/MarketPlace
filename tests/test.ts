@@ -178,7 +178,7 @@ describe("🏭 Contracts Deployment", function () {
 
   });
   describe("🌟 Events 🌟", function () {
-    it("Should emit an event on Lock", async function () {
+    it("✨ Should emit an event on Lock ✨", async function () {
       
       const { tokenA,owner,timeLock,lockedTime} = await loadFixture(deployLockFixture);
 
@@ -188,7 +188,7 @@ describe("🏭 Contracts Deployment", function () {
       .withArgs(owner.address,tokenA.address,1000, 180); // We accept any value as `when` arg
     });
 
-    it("Should emit an event on UnLock", async function () {
+    it("✨ Should emit an event on UnLock ✨", async function () {
       const { tokenA,owner,timeLock,lockedTime} = await loadFixture(deployLockFixture);
         await timeLock.lock(tokenA.address,1000,lockedTime);
 
