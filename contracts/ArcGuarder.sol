@@ -23,40 +23,6 @@ contract ArcGuarder {
         );
         _;
     }
-
-     /**
-     * @dev Modifier to allow actions only when the contract IS NOT paused
-     */
-    modifier whenNotPaused() {
-        require(!paused, "ARC:PAUSED");
-        _;
-    }
-
-    /**
-     * @dev Modifier to allow actions only when the contract IS paused
-     */
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
-
-     /**
-     * @dev Called by any woner role to pause the contract. Used only when
-     *  a bug or exploit is detected and we need to limit damage.
-     */
-    function pause() public onlyRole(2) whenNotPaused {
-        paused = true;
-    }
-
-    /**
-     * @dev Unpauses the smart contract. Can only be called by the Owner, since
-     *  one reason we may pause the contract is when CFO or COO accounts are compromised.
-     * @notice This is public rather than external so it can be called by derived contracts.
-     */
-    function unpaused() public onlyRole(2) whenPaused {
-        paused = false;
-    }
-
     /**
      * @dev an public method to set manager contract with permission. master only!
      * @param addr address
