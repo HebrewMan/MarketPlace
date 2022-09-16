@@ -185,7 +185,7 @@ describe("🏭 Contracts Deployment", function () {
       await timeLock.lock(tokenA.address,1000,lockedTime);
 
       await expect(timeLock.lock(tokenA.address,1000,180)).to.emit(timeLock, "Lock")
-      .withArgs(owner.address,tokenA.address,1000, 180); // We accept any value as `when` arg
+      .withArgs(owner.address,tokenA.address,1000, 180,anyValue); // We accept any value as `when` arg
     });
 
     it("✨ Should emit an event on UnLock ✨", async function () {
@@ -196,7 +196,7 @@ describe("🏭 Contracts Deployment", function () {
         await time.increaseTo(unlockTime); 
         //UnLock(msg.sender, order.tokenAddr, order.lockAmount);
         await expect(timeLock.unlock(0)).to.emit(timeLock, "UnLock")
-        .withArgs(owner.address,tokenA.address,1000); // We accept any value as `when` arg
+        .withArgs(owner.address,tokenA.address,1000,anyValue); // We accept any value as `when` arg
     });
   });
 });

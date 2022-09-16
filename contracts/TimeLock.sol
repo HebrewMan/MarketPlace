@@ -29,8 +29,8 @@ contract TimeLock is Ownable ,ArcTokenGuarder{
     //token=>lockAmount
     mapping(address => uint) tokenLockAmounts;
 
-    event Lock(address user, address tokenAddr, uint value, uint time);
-    event UnLock(address user, address tokenAddr, uint value);
+    event Lock(address indexed user, address indexed tokenAddr, uint value, uint time,uint index);
+    event UnLock(address indexed user, address indexed tokenAddr, uint value,uint index);
 
     function lock(address _tokenAddr, uint _amount, uint _seconds) external{
         require(_tokenAddr != address(0), "Arc:invalid token address");
@@ -45,7 +45,7 @@ contract TimeLock is Ownable ,ArcTokenGuarder{
         }
 
         IERC20(_tokenAddr).transferFrom(msg.sender, address(this), _amount);
-        emit Lock(msg.sender, _tokenAddr, _amount, _seconds);
+        emit Lock(msg.sender, _tokenAddr, _amount, _seconds ,userOrders[msg.sender].length-1);
     }
 
     function unlock(uint _index) external{
@@ -55,17 +55,9 @@ contract TimeLock is Ownable ,ArcTokenGuarder{
         require(block.timestamp >= order.endTime, "Arc:unlock time not reached");
         order.isClaimed = true;
 
-        uint withdrawAmount = getLockAmount(order.tokenAddr,order.lockAmount);
-        IERC20(order.tokenAddr).transfer(msg.sender, withdrawAmount);
+        IERC20(order.tokenAddr).transfer(msg.sender, order.lockAmount);
         tokenLockAmounts[order.tokenAddr] -= order.lockAmount;
-        emit UnLock(msg.sender, order.tokenAddr, order.lockAmount);
-    }
-
-    function getLockAmount(address _tokenAddr,uint _lockAmount) internal  view returns(uint){
-        uint balance =  IERC20(_tokenAddr).balanceOf(address(this));
-        uint totalAmount = tokenLockAmounts[_tokenAddr];
-        uint withdrawAmount = balance * 1e16 / totalAmount * _lockAmount / 1e16;
-        return withdrawAmount;
+        emit UnLock(msg.sender, order.tokenAddr, order.lockAmount,_index);
     }
 
     function getOrders() public view returns (Order[] memory order){
@@ -79,13 +71,6 @@ contract TimeLock is Ownable ,ArcTokenGuarder{
     function getOrder(uint _index) public view returns (Order memory order){
         require(getUserOrderLength() > _index,"ARC:INVALID_INDEX");
         return userOrders[msg.sender][_index];
-    }
-
-    function getOrderView(uint _index) internal view returns(Order memory){
-        Order memory userOrder = userOrders[msg.sender][_index];
-        uint withdrawAmount = getLockAmount(userOrder.tokenAddr,userOrder.lockAmount);
-        Order memory order = Order(userOrder.tokenAddr, withdrawAmount, userOrder.startTime, userOrder.endTime, userOrder.isClaimed);
-        return order;
     }
 
     function canUnlock(uint _index) public view returns (bool){
