@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.13;
 
 import "./interfaces/IArcGovernance.sol";
-
+import "hardhat/console.sol";
 contract ArcGuarder {
 
-    //address governance;
-    address public governance = address(0x7427D5cA662f6c2e43cE0530BDcc7E82a0db06b7);
-
-    /**
-     * @dev State of pause
-     */
-    bool internal paused = false;
+    //test 0xd8152729FAfD176Ba76df3B3d07f1982ACF4cF18
+    //main 0x7427D5cA662f6c2e43cE0530BDcc7E82a0db06b7
+    //hardhat 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+    address public governance = 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0;
 
     /**
      * @dev Access modifier for cashier only functionality
@@ -19,7 +16,7 @@ contract ArcGuarder {
     modifier onlyRole(uint roleId) {
         require(
             IArcGovernance(governance).getRoleAddress(roleId) == msg.sender,
-            "ARC:Denied"
+            "ArcGuarder:Denied"
         );
         _;
     }
@@ -28,15 +25,7 @@ contract ArcGuarder {
      * @param addr address
      */
     function setGovernance(address addr) public onlyRole(1) {
-        _setGovernance(addr);
-    }
-
-    /**
-     * @dev an internal method to set manager contract without permission. it can be override
-     * @param addr address
-     */
-    function _setGovernance(address addr) internal {
-        require(addr != address(0), "ARC:ADDR0");
+        require(addr != address(0), "ArcGuarder:Address 0");
         governance = addr;
     }
    
