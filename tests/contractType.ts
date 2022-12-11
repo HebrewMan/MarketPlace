@@ -9,7 +9,6 @@ describe("🏭 Contracts Deployment", function () {
   
     const [account1, account2] = await ethers.getSigners();
 
-
     //a standalone contract 🥚
     const _ERC1155 = await ethers.getContractFactory("MyToken1155");
     const ERC1155 = await _ERC1155.deploy("NFT1155");

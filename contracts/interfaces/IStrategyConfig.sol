@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 interface IStrategyConfig {
-    function getFee() external returns (uint);
+    function getFee() external view returns (uint);
 
-    function getVaultAddr() external returns (address);
+    function getVaultAddr() external view returns (address);
 
-    function getOrdersAddr() external returns (address);
+    function getOrdersAddr() external view returns (address);
 
     function getProxyAddr() external returns (address);
 

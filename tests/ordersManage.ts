@@ -3,6 +3,7 @@ import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
+//done
 describe("🏭 Contracts Deployment", function () {
 
   async function deployLockFixture() {
@@ -11,12 +12,12 @@ describe("🏭 Contracts Deployment", function () {
 
     const addr0 = '0x0000000000000000000000000000000000000000';
 
-      //a standalone contract 🥚
-      const _ERC1155 = await ethers.getContractFactory("MyToken1155");
-      const ERC1155 = await _ERC1155.deploy("NFT1155");
-      //a standalone contract
-      const _ERC20 = await ethers.getContractFactory("MyToken20");
-      const ERC20 = await _ERC20.deploy();
+    //a standalone contract 🥚
+    const _ERC1155 = await ethers.getContractFactory("MyToken1155");
+    const ERC1155 = await _ERC1155.deploy("NFT1155");
+    //a standalone contract
+    const _ERC20 = await ethers.getContractFactory("MyToken20");
+    const ERC20 = await _ERC20.deploy();
   
 
     //a standalone contract 🥚
@@ -233,7 +234,6 @@ describe("🏭 Contracts Deployment", function () {
     
     })
 
-   
 
   });
 

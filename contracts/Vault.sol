@@ -19,7 +19,7 @@ contract Vault is ArcTokenGuarder{
     }
 
     modifier onlyStrategists{
-        require(StrategyManage.checkAccess(msg.sender),"Vault:no access");
+        require(StrategyManage.checkAccess(msg.sender),"Vault:No access");
         _;
     }
 
@@ -40,23 +40,25 @@ contract Vault is ArcTokenGuarder{
         require(IERC1155(_nft).balanceOf(address(this),_tokenId)>=_amount,"Vault:Insufficient balance");
         string memory _type = verifyByAddress(_nft);
         if(keccak256(abi.encodePacked("1155")) == keccak256(abi.encodePacked(_type))){
-            IERC1155(_nft).safeTransferFrom(address(this),tx.origin,_tokenId,_amount,"");
+            IERC1155(_nft).safeTransferFrom(address(this),tx.origin,_tokenId,_amount,"0x");
         }else{
-            IERC721(_nft).safeTransferFrom(address(this),tx.origin,_tokenId,"");
+            IERC721(_nft).safeTransferFrom(address(this),tx.origin,_tokenId,"0x");
         }
     }
 
     function receiver(address _token,uint _amount) external onlyStrategists isNotPaused{
+        require(IERC20(_token).balanceOf(tx.origin) >= _amount,"Vault:Insufficient balance");
         IERC20(_token).transferFrom(tx.origin, address(this),_amount);
     }
 
     function receiverNFT(address _nft,uint _tokenId,uint _amount) external onlyStrategists isNotPaused{
+        require(IERC1155(_nft).balanceOf(tx.origin,_tokenId)>=_amount,"Vault:Insufficient balance");
         string memory _type = verifyByAddress(_nft);
 
         if(keccak256(abi.encodePacked("1155")) == keccak256(abi.encodePacked(_type))){
-            IERC1155(_nft).safeTransferFrom(tx.origin,address(this),_tokenId,_amount,"");
+            IERC1155(_nft).safeTransferFrom(tx.origin,address(this),_tokenId,_amount,"0x");
         }else{
-            IERC721(_nft).safeTransferFrom(tx.origin,address(this),_tokenId,"");
+            IERC721(_nft).safeTransferFrom(tx.origin,address(this),_tokenId,"0x");
         }
     }
 

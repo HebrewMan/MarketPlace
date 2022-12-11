@@ -14,6 +14,8 @@ describe("🏭 Contracts Deployment", function () {
     const _ArcGovernance = await ethers.getContractFactory("ArcGovernance");
     const ArcGovernance = await _ArcGovernance.deploy(account1.address,account2.address);
 
+    console.log(ArcGovernance.address,"============");
+    
     //ArcGovernance control this contract 🧭 
     //a standalone contract 🥚
     //Need to pass in 3 parameters (vault orders proxy)
