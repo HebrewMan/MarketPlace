@@ -40,7 +40,12 @@ contract BasicTrade{
         IERC20 ERC20 = IERC20(_Order.payment);
         require(ERC20.balanceOf(tx.origin) >= _Order.price*_amount,"BasicTrade:Insufficient balance");
 
-        uint vaultFee = _Order.price * _amount * StrategyConfig.getFee()/1000;
+        uint vaultFee;
+        if(StrategyConfig.getFee()>0){
+            vaultFee = _Order.price * _amount * StrategyConfig.getFee()/1000;
+        }else{
+            vaultFee = 0;
+        }
         uint sellerFee = _Order.price * _amount - vaultFee;
 
         ERC20.transferFrom(tx.origin,StrategyConfig.getVaultAddr(),vaultFee);

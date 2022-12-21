@@ -3,15 +3,15 @@ pragma solidity ^0.8.13;
 import "./ArcGuarder.sol";
 contract StrategyConfig is ArcGuarder{
     
-    uint internal fee = 3;
+    uint internal fee;
     address internal vaultAddr; 
     address internal ordersAddr;
     address internal proxyAddr;
 
     event SetFee(uint _fee);
-    event SetVaultAddr(address _addr);
-    event SetOrdersAddr(address _addr);
-    event SetProxyAddr(address _addr);
+    event SetVaultAddr(address indexed _addr);
+    event SetOrdersAddr(address indexed _addr);
+    event SetProxyAddr(address indexed _addr);
 
     constructor(address _vaultAddr,address _ordersAddr,address _proxyAddr){
         vaultAddr = _vaultAddr;

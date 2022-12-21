@@ -9,6 +9,7 @@ import {
 import { ethers } from "hardhat";
 
 async function main() {
+  console.log('============',process.env.PRIVATE_KEY)
 
   // check api service healthy
   var isHealthy = await checkHealthy()
@@ -26,6 +27,7 @@ async function main() {
   // console.log("arc governance:", arcGovernance)
 
   let contractsList = contractList;
+
 
   if (contractsList.length == 0) {
     console.error('no contract to deploy');

@@ -12,7 +12,6 @@ describe("🏭 Contracts Deployment", function () {
 
     const addr0 = '0x0000000000000000000000000000000000000000';
 
-
     //a standalone contract 🥚
     const _ERC1155 = await ethers.getContractFactory("MyToken1155");
     const ERC1155 = await _ERC1155.deploy("NFT1155");
@@ -35,7 +34,7 @@ describe("🏭 Contracts Deployment", function () {
     //** need add straegyer */
 
     //only StrategyManage can call this contract. --------> StrategyManage
-    const _Vault:any = await ethers.getContractFactory("Vault");
+    const _Vault = await ethers.getContractFactory("Vault");
     const Vault = await _Vault.deploy(StrategyManage.address);
 
     //ArcGovernance control this contract 🧭 
@@ -45,9 +44,8 @@ describe("🏭 Contracts Deployment", function () {
 
     //ArcGovernance control this contract 🧭 
     //Strategys contract depends on that. --------> BasicTrade 🌊
-    const _TradeProxy:any = await ethers.getContractFactory("TradeProxy");
+    const _TradeProxy = await ethers.getContractFactory("TradeProxy");
     const TradeProxy = await _TradeProxy.deploy();
-
 
     //ArcGovernance control this contract 🧭 
     //a standalone contract 🥚
@@ -57,14 +55,14 @@ describe("🏭 Contracts Deployment", function () {
     
 
     //Strategy contract No.1 🐬
-    const _BasicTrade:any = await ethers.getContractFactory("BasicTrade");
+    const _BasicTrade = await ethers.getContractFactory("BasicTrade");
     const BasicTrade = await _BasicTrade.deploy(StrategyConfig.address);
 
     //approve actions
     await ERC20.approve(Vault.address,'100000000000000000000000');
     await ERC1155.setApprovalForAll(Vault.address,true);
 
-    await StrategyManage.addStrategist(BasicTrade.address);
+    await StrategyManage.addStrategist(BasicTrade.address);//1
 
     return { account1, account2,account3,addr0,ERC1155,ERC20,ArcGovernance,Vault,OrdersManage,TradeProxy,StrategyManage,StrategyConfig,BasicTrade};
   }
@@ -153,7 +151,7 @@ describe("🏭 Contracts Deployment", function () {
 
     it("✨ The current ID is 2 after the user cancels the order ✨", async () => {
       const { ERC20, ERC1155 ,account1,TradeProxy,BasicTrade,OrdersManage,addr0} = await loadFixture(deployLockFixture);
-      let [strategy,nft,payment] = [BasicTrade.address,ERC1155.address,ERC20.address,ERC20.address];
+      let [strategy,nft,payment] = [BasicTrade.address,ERC1155.address,ERC20.address];
       TradeProxy.addOrder(strategy,nft,payment,1,10,1,0);
       expect(await ERC1155.balanceOf(account1.address,1)).to.be.equal(90);
 
@@ -203,6 +201,7 @@ describe("🏭 Contracts Deployment", function () {
 
       console.log('=================');
       console.log(await ERC20.balanceOf(Vault.address));
+
       expect(await ERC20.balanceOf(Vault.address)).to.be.equal(3);
       expect(await ERC20.balanceOf(account2.address)).to.be.equal(0);
 
@@ -246,15 +245,27 @@ describe("🏭 Contracts Deployment", function () {
 
     })
 
-
   });
   
   describe("🌟 Proxy contract bidOrder() 🌟", function () {
 
+    it("✨ nothing will happen ✨", async () => {
+      const { ERC20, ERC1155 ,account1,account2,TradeProxy,BasicTrade,Vault,OrdersManage} = await loadFixture(deployLockFixture);
+      let [strategy,nft,payment] = [BasicTrade.address,ERC1155.address,ERC20.address,ERC20.address];
+      await TradeProxy.addOrder(strategy,nft,payment,1,10,100,0);
+      await TradeProxy.bidOrder(strategy,1,10);
+    })
+
   });
   describe("🌟 Proxy contract cancelBid() 🌟", function () {
 
+    it("✨ nothing will happen ✨", async () => {
+      const { ERC20, ERC1155 ,account1,account2,TradeProxy,BasicTrade,Vault,OrdersManage} = await loadFixture(deployLockFixture);
+      let [strategy,nft,payment] = [BasicTrade.address,ERC1155.address,ERC20.address,ERC20.address];
+      await TradeProxy.addOrder(strategy,nft,payment,1,10,100,0);
+      await TradeProxy.cancelBid(strategy,1);
+    })
+
   });
  
-
 });

@@ -28,7 +28,6 @@ const config: HardhatUserConfig = {
       accounts: [`${privateKey}`],
     },
     testnet: {
-      // url: `https://data-seed-prebsc-1.arcdex.io:8575`, //<---- YOUR INFURA ID! (or it won't work)
       url: `https://data-seed-prebsc-1-s1.binance.org:8545`, //<---- YOUR INFURA ID! (or it won't work)
       accounts: [`${privateKey}`],
     },

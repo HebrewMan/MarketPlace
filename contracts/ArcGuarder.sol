@@ -8,7 +8,7 @@ contract ArcGuarder {
     //test 0xd8152729FAfD176Ba76df3B3d07f1982ACF4cF18
     //main 0x7427D5cA662f6c2e43cE0530BDcc7E82a0db06b7
     //hardhat 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
-    address public governance = 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0;
+    address public governance = 0x7427D5cA662f6c2e43cE0530BDcc7E82a0db06b7;
 
     /**
      * @dev Access modifier for cashier only functionality

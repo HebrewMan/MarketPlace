@@ -12,8 +12,8 @@ contract OrdersManage is IOrderManage{
 
     IStrategyManage StrategyManage;
 
-    event AddOrder(address _strategy,address _seller,address _nft,address _payment,uint _tokenId,uint _amount,uint _price,uint _endAt,uint _orderId);
-    event BuyOrder(address _buyer,uint _orderId,uint _amount);
+    event AddOrder(address _strategy,address indexed _seller,address indexed _nft,address indexed _payment,uint _tokenId,uint _amount,uint _price,uint _endAt,uint _orderId);
+    event BuyOrder(address indexed _buyer,uint _orderId,uint _amount);
     event CancelOrder(uint _orderId);
     event BidOrder(uint _orderId);
     event CancelBid(uint _orderId);
