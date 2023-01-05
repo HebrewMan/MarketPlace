@@ -32,10 +32,10 @@ describe("🏭 Contracts Deployment", function () {
       const { StrategyConfig,ArcGovernance,account2,addr3,addr4,addr5,} = await loadFixture(deployLockFixture);
 
       StrategyConfig.setFee(8);
-      expect(await StrategyConfig.fee()).to.be.equal(8);
-      expect(await StrategyConfig.vaultAddr()).to.be.equal(addr3.address);
-      expect(await StrategyConfig.ordersAddr()).to.be.equal(addr4.address);
-      expect(await StrategyConfig.proxyAddr()).to.be.equal(addr5.address);
+      expect(await StrategyConfig.getFee()).to.be.equal(8);
+      expect(await StrategyConfig.getVaultAddr()).to.be.equal(addr3.address);
+      expect(await StrategyConfig.getOrdersAddr()).to.be.equal(addr4.address);
+      expect(await StrategyConfig.getProxyAddr()).to.be.equal(addr5.address);
 
     })
 
@@ -48,9 +48,9 @@ describe("🏭 Contracts Deployment", function () {
       StrategyConfig.setOrdersAddr(ArcGovernance.address);
       StrategyConfig.setProxyAddr(ArcGovernance.address);
       
-      expect(await StrategyConfig.vaultAddr()).to.be.equal(ArcGovernance.address);
-      expect(await StrategyConfig.ordersAddr()).to.be.equal(ArcGovernance.address);
-      expect(await StrategyConfig.proxyAddr()).to.be.equal(ArcGovernance.address);
+      expect(await StrategyConfig.getVaultAddr()).to.be.equal(ArcGovernance.address);
+      expect(await StrategyConfig.getOrdersAddr()).to.be.equal(ArcGovernance.address);
+      expect(await StrategyConfig.getProxyAddr()).to.be.equal(ArcGovernance.address);
 
     })
 
